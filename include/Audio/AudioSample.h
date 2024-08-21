@@ -16,9 +16,17 @@ namespace Audio {
 
         AudioSample(AudioSample&& other) noexcept = default;
 
-        AudioSample& operator=(const AudioSample& other) = delete;
+        AudioSample operator=(const AudioSample& other) {
+            return other;
+        }
 
-        AudioSample& operator=(AudioSample&& other) noexcept = delete;
+        AudioSample& operator=(AudioSample&& other) {
+            return other;
+        }
+
+        AudioSample operator+(AudioSample&& other) const {
+            return AudioSample(this->c1 + other.c1, this->c2+other.c2);
+        }
 
         AudioSample toMono() const {
             double normalized = (c1 + c2) / 2;

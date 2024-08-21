@@ -38,7 +38,6 @@ int main() {
     while(cnl.isActive()) {
 
         Audio::AudioSample steroSample = cnl.sample(t);
-
         Audio::AudioSample normalizedSample = steroSample * (static_cast<double>(max_amplitude) * 1);
         Audio::AudioSample clampedSample = normalizedSample.clamp(-max_amplitude, max_amplitude);
 

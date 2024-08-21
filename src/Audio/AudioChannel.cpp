@@ -29,11 +29,19 @@ namespace Audio {
         double monoSample = combineActiveNotes();
         AudioSample stereoSample = panMonoSample(monoSample);
 
-        return stereoSample;
+        return stereoSample * volume;
     }
 
     bool AudioChannel::isActive() {
         return notes.size() != 0 || !scale.empty();
+    }
+
+    void AudioChannel::playNote(std::string note) {
+        double frequency = calculateFrequency(note);
+
+        notes.push_back(std::make_shared<Audio::AudioNote>(osc,
+                adsr,
+                frequency, 1));
     }
 
     void AudioChannel::tickRoll(int t) {
@@ -45,15 +53,7 @@ namespace Audio {
             }
         }
     }
-
-    void AudioChannel::playNote(std::string note) {
-        double frequency = calculateFrequency(note);
-
-        notes.push_back(std::make_shared<Audio::AudioNote>(osc,
-                adsr,
-                frequency, 1));
-    }
-
+ 
     double AudioChannel::combineActiveNotes() {
         double value = 0;
 
@@ -73,8 +73,8 @@ namespace Audio {
     AudioSample AudioChannel::panMonoSample(double monoSample) {
         double pan_mapped = ((pan + 1) / 2.0) * (M_PI / 2.0);
 
-        double left_sample = monoSample * sin(pan_mapped) * volume;
-        double right_sample = monoSample * cos(pan_mapped) * volume;
+        double left_sample = monoSample * sin(pan_mapped);
+        double right_sample = monoSample * cos(pan_mapped);
 
         return AudioSample(left_sample, right_sample);
     }

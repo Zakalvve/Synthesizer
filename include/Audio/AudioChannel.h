@@ -21,6 +21,8 @@ namespace Audio{
             //Returns a stereo signal
             AudioSample sample(int t);
             bool isActive();
+            void playNote(std::string note);
+            void stopNote(std::string note);
         private:
             std::shared_ptr<Oscillator> osc;
             std::shared_ptr<ADSRProfile> adsr;
@@ -35,7 +37,6 @@ namespace Audio{
             //effects?? HPF etc
 
             void tickRoll(int t);
-            void playNote(std::string note);
             double combineActiveNotes();
             AudioSample panMonoSample(double monoSample);
             double calculateFrequency(std::string note) {

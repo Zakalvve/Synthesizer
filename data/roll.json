@@ -9,6 +9,12 @@
             "events": [
                 {
                     "deltaTime": 0,
+                    "type": "meta",
+                    "subType": "channelOn",
+                    "channel": 0
+                },
+                {
+                    "deltaTime": 0,
                     "type": "channel",
                     "subType": "keyOn",
                     "channel": 0,

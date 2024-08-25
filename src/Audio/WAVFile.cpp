@@ -23,7 +23,7 @@ namespace Audio {
     }
 
     void WAVFile::open(const std::string& fileName) {
-        wav.open("output/" + fileName, std::ios::binary);
+        wav.open("../output/" + fileName, std::ios::binary);
 
         if (wav.is_open()) {
             wav << chunk_id;

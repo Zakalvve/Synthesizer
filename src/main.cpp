@@ -8,11 +8,12 @@
 
 #include "WAVFile.h"
 #include "AudioSample.h"
-#include "AudioChannel.h"
 #include "MidiRoll.h"
 #include "MidiJsonFile.h"
 #include "MidiRollTrack.h"
 #include "MidiRollEvent.h"
+#include "Synthesizer.h"
+
 using namespace std;
 
 const int sample_rate = 44100;
@@ -21,33 +22,39 @@ const int max_amplitude = (1u << (bits_per_sample - 1)) - 1;
 
 int main() {
 
-    std::string filePath = "../data/roll.json";
+    std::string filePath = "../data/moonlight-sonata.json";
     Audio::Midi::MidiJsonFile mj;
 
-    if (mj.load(filePath.c_str())) {
-        const Audio::Midi::MidiRoll& roll = *(mj.getRoll());
+    if (mj.load(filePath.c_str(), sample_rate)) {
+        Audio::Midi::MidiRoll& roll = *(mj.getRoll());
+        Audio::WAVFile wav(true, sample_rate, bits_per_sample, max_amplitude);
+
+        Audio::Synthesizer synth(sample_rate, 1.0);
+
+        wav.open("test.wav");
+
+        int t = 0;
+
+        while(roll.isRolling() || synth.isPlaying()) {
+
+            std::vector<std::unique_ptr<Audio::Midi::MidiRollEvent>> midiEvents = roll.tickRoll(t);
+
+            for(auto& event: midiEvents){
+                // Visitor pattern
+                event->process(synth);
+            }
+
+            Audio::AudioSample steroSample = synth.sample();
+            Audio::AudioSample normalizedSample = steroSample * (static_cast<double>(max_amplitude) * 1);
+            Audio::AudioSample clampedSample = normalizedSample.clamp(-max_amplitude, max_amplitude);
+
+            wav.sample(clampedSample);
+
+            ++t;
+        }
+
+        wav.close();
+
     }
-
-    Audio::WAVFile wav(true, sample_rate, bits_per_sample, max_amplitude);
-    Audio::AudioChannel cnl(sample_rate);
-
-    wav.open("test.wav");
-
-    int t = 0;
-
-    while(cnl.isActive()) {
-
-        Audio::AudioSample steroSample = cnl.sample(t);
-
-        Audio::AudioSample normalizedSample = steroSample * (static_cast<double>(max_amplitude) * 1);
-        Audio::AudioSample clampedSample = normalizedSample.clamp(-max_amplitude, max_amplitude);
-
-        wav.sample(clampedSample);
-
-        ++t;
-    }
-
-    wav.close();
-
     return 0;
 }

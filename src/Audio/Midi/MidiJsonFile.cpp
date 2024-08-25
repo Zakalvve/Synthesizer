@@ -4,18 +4,21 @@
 #include <cstdio>
 #include <iostream>
 #include <memory>
+#include <vector>
+#include <queue>
 
 #include "MidiJsonFile.h"
 #include "MidiRoll.h"
 #include "MidiRollTrack.h"
 #include "MidiRollEvent.h"
 #include "MidiRollKeyEvent.h"
+#include "MidiRollChannelOnEvent.h"
 
 namespace Audio {
     namespace Midi {
         MidiJsonFile::MidiJsonFile() : roll(nullptr) {};
         MidiJsonFile::~MidiJsonFile() {};
-        bool MidiJsonFile::load(const char* filePath) {
+        bool MidiJsonFile::load(const char* filePath, int sampleRate) {
             FILE* fp = fopen(filePath, "r");
 
             if (!fp) {
@@ -67,7 +70,7 @@ namespace Audio {
                 for(rapidjson::SizeType i = 0; i < jTracks.Size(); i++){
                     const rapidjson::Value& track = jTracks[i];
                     std::string trackName = "";
-                    std::vector<std::unique_ptr<MidiRollEvent>> mjEvents;
+                    std::queue<std::unique_ptr<MidiRollEvent>> mjEvents;
 
                     if (track.HasMember("trackName") && track["trackName"].IsString()){
                         trackName = track["trackName"].GetString();
@@ -116,12 +119,18 @@ namespace Audio {
                                     mjEvent = std::make_unique<MidiRollKeyEvent>(deltaTime, type, subType, channel, note, velocity);
 
                                 }
-                            } else {
+                            } else if (type == "meta") {
+                                if (subType == "channelOn"){
+                                    mjEvent = std::make_unique<MidiRollChannelOnEvent>(deltaTime, type, subType, channel);
+                                }
+                            }
+
+                            if (mjEvent == nullptr){
                                 mjEvent = std::make_unique<MidiRollEvent>(deltaTime, type, subType, channel);
                             }
 
                             if (mjEvent) {
-                                mjEvents.push_back(std::move(mjEvent));
+                                mjEvents.push(std::move(mjEvent));
                             }
                         }
                     }
@@ -131,7 +140,7 @@ namespace Audio {
                     mjTracks.push_back(std::move(mjTrack));
                 }
 
-                roll = std::make_unique<MidiRoll>(ticksPerQuarterNote, microsecondsPerQuarterNote, tracksCount, std::move(mjTracks));
+                roll = std::make_unique<MidiRoll>(sampleRate, ticksPerQuarterNote, microsecondsPerQuarterNote, tracksCount, std::move(mjTracks));
             }
 
             return roll != nullptr;

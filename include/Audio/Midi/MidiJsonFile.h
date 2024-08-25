@@ -14,7 +14,7 @@ namespace Audio {
                 MidiJsonFile();
                 virtual ~MidiJsonFile();
 
-                bool load(const char* filePath);
+                bool load(const char* filePath, int sampleRate);
                 std::unique_ptr<MidiRoll>& getRoll() { return roll; };
 
             private:

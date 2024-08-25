@@ -6,20 +6,24 @@
 namespace Audio {
     class ADSRProfile {
         public:
-            ADSRProfile(int sampleRate, double attackDuration, double decayDuration, double holdDuration, double releaseDuration, double sustainThreshold);
-            virtual ~ADSRProfile();
+            ADSRProfile(int sampleRate, double attackDuration, double decayDuration, double releaseDuration, double sustainThreshold);
+            virtual ~ADSRProfile() = default;
 
             double calculateAmplitude(int t);
-            int getTotalSamples();
+            void play();
+            void release();
+            bool isEnded();
 
         private:
+            double max_amplitude = 1.0;
             int sample_rate;
+            bool is_sustaining;
+            bool is_active;
             int attack_duration;
             int decay_duration;
             int sustain_duration;
-            int release_duration;
             double sustain_threshold;
-            double max_amplitude = 1.0;
+            int release_duration;
 
             double cubeRoot(double x) const {
                 return std::cbrt(x);

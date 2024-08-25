@@ -1,69 +1,62 @@
 #include <cmath>
 #include <iostream>
+#include <memory>
 
 #include "AudioChannel.h"
 #include "Oscillator.h"
 
 namespace Audio {
-    AudioChannel::AudioChannel(int sampleRate) : sample_rate(sampleRate), pan(0.0), volume(1.0) {
-        double hold_duration = 2.84;
-        double attack_duration = 0.01;
-        double decay_duration = 2.83;
-        double sustain_threshold = 0.1;
-        double release_duration = 0.1;
-
-        osc = std::make_shared<Audio::Oscillator>(Audio::Oscillator::createSawtoothWave(sampleRate));
-        adsr = std::make_shared<Audio::ADSRProfile>(sampleRate, attack_duration, decay_duration, hold_duration, release_duration, sustain_threshold);
-
-        std::vector<std::string> scaleNotes = {"C4", "D4", "E4", "F4", "G4", "A4", "B4", "C5"};
-        for (const std::string& note : scaleNotes) {
-            scale.push(note);
-        }
+    AudioChannel::AudioChannel(int sampleRate) : sample_rate(sampleRate), pan(0.0), volume(0.5) {
+        osc = std::make_shared<Audio::Oscillator>(Audio::Oscillator::createSineWave(sampleRate));
     }
 
     AudioChannel::~AudioChannel() { }
 
-    AudioSample AudioChannel::sample(int t) {
-        tickRoll(t);
-
+    AudioSample AudioChannel::sample() {
         double monoSample = combineActiveNotes();
         AudioSample stereoSample = panMonoSample(monoSample);
-
         return stereoSample * volume;
     }
 
     bool AudioChannel::isActive() {
-        return notes.size() != 0 || !scale.empty();
+        for(auto& note : notes){
+            if (!note.second->isEnded()){
+                return true;
+            }
+        }
+        return false;
     }
 
     void AudioChannel::playNote(std::string note) {
         double frequency = calculateFrequency(note);
+        
+        if (notes.find(note) == notes.end()){
+            // Note not found in map
+            double attack_duration = 0.01;
+            double decay_duration = 0.03;
+            double sustain_threshold = 0.4;
+            double release_duration = 0.1;
 
-        notes.push_back(std::make_shared<Audio::AudioNote>(osc,
-                adsr,
-                frequency, 1));
+            std::unique_ptr<ADSRProfile> adsr = std::make_unique<ADSRProfile>(sample_rate, attack_duration, decay_duration, release_duration, sustain_threshold);
+
+            notes[note] = std::make_shared<Audio::AudioNote>(osc, std::move(adsr), frequency, 1);
+        }
+
+        notes[note]->play();
     }
 
-    void AudioChannel::tickRoll(int t) {
-        if (t % (sample_rate * 3) == 0) {
-            if (!scale.empty()) {
-                std::string note = scale.front();
-                playNote(note);
-                scale.pop();
-            }
-        }
+    void AudioChannel::releaseNote(std::string note) {
+        if (notes.find(note) == notes.end()) return;
+
+        notes[note]->release();
     }
  
     double AudioChannel::combineActiveNotes() {
         double value = 0;
 
-        for (auto it = notes.begin(); it != notes.end(); ){
-            value += (*it)->sample();
-
-            if ((*it)->isEnded()) {
-                it = notes.erase(it);
-            } else {
-                ++it;
+        for (auto& note : notes){
+            if (!note.second->isEnded()){
+                value += note.second->sample();
             }
         }
 

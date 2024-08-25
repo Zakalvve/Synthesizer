@@ -9,21 +9,23 @@
 namespace Audio {
     class AudioNote {
         public:
-            AudioNote(std::shared_ptr<Oscillator> oscillator, std::shared_ptr<ADSRProfile> adsrProfile, double frequency, double strength);
-            virtual ~AudioNote();
+            AudioNote(std::shared_ptr<Oscillator> osc, std::unique_ptr<ADSRProfile> adsrProfile, double frequency, double strength);
+            virtual ~AudioNote() = default;
 
             double sample();
+            void play();
+            void release();
             bool isEnded();
         protected:
-
+            
         private:
-            int t;
-            double strength;
-            double frequency;
-            int total_samples;
-            int harmonics = 10;
+            int harmonics = 12;
             std::shared_ptr<Oscillator> osc;
-            std::shared_ptr<ADSRProfile> adsr;
+            std::unique_ptr<ADSRProfile> adsr;
+            double frequency;
+            double strength;
+            int t;
+            int isPlaying;
     };
 }
 

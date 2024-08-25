@@ -18,9 +18,12 @@ namespace Audio {
                 
                 const std::string& getTrackName() const { return trackName; }
                 void setTrackName(std::string tn) { trackName = std::move(tn); }
-                const std::queue<std::unique_ptr<MidiRollEvent>>& getEvents() const { return events; }
-                const MidiRollEvent& takeNext() {
-                    MidiRollEvent& event = *(events.front());
+                std::unique_ptr<MidiRollEvent> takeNext() {
+                    if (events.empty()) {
+                        return nullptr;
+                    }
+
+                    std::unique_ptr<MidiRollEvent> event = std::move(events.front());
                     events.pop();
                     return event;
                 }

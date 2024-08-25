@@ -9,18 +9,21 @@
 namespace Audio {
     Synthesizer::Synthesizer(int sampleRate, double volume) : sample_rate(sampleRate), volume(volume) {}
 
-    AudioSample Synthesizer::sample(int t){
+    AudioSample Synthesizer::sample(){
         AudioSample sample = AudioSample(0,0);
-        for(auto it = channels.begin(); it != channels.end();){
-            sample = sample + it->second.sample(t);
+
+        for(auto& channel : channels){
+            AudioSample channelSample = channel.second.sample();
+            sample = sample + channelSample;
         }
+
         sample = sample * volume;
         return sample;
     }
 
     bool Synthesizer::isPlaying() {
-        for (auto it = channels.begin(); it != channels.end();){
-            if (it->second.isActive()){
+        for (auto& channel : channels){
+            if (channel.second.isActive()){
                 return true;
             }
         }
@@ -35,8 +38,7 @@ namespace Audio {
         int channelIndex = event.getChannel();
         if (channels.find(channelIndex) ==  channels.end()){
             // Channel does not exist
-            auto channel = AudioChannel(sample_rate);
-            channels[channelIndex] = channel;
+            channels.emplace(channelIndex, AudioChannel(sample_rate));
         }
     }
 
@@ -47,7 +49,7 @@ namespace Audio {
             if (eventType == "keyOn"){
                 search->second.playNote(event.getNote()); // Should send the strength as well
             } else if (eventType == "keyOff"){
-                search->second.stopNote(event.getNote()); // Should send the strength as well
+                search->second.releaseNote(event.getNote());
             }
         }
     }

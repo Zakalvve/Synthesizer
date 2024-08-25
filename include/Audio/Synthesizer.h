@@ -4,20 +4,21 @@
 #include <unordered_map>
 
 #include "AudioChannel.h"
+#include "MidiEventProcessor.h"
 #include "MidiRollEvent.h"
 #include "MidiRollKeyEvent.h"
 #include "MidiRollChannelOnEvent.h"
 
 namespace Audio {
-    class Synthesizer {
+    class Synthesizer : public Midi::MidiEventProcessor {
         public:
             Synthesizer(int sampleRate, double volume);
             ~Synthesizer() = default;
-            AudioSample sample(int t);
+            AudioSample sample();
             bool isPlaying();
-            void processMidiEvent(Midi::MidiRollEvent& event);
-            void processMidiEvent(Midi::MidiRollChannelOnEvent& event);
-            void processMidiEvent(Midi::MidiRollKeyEvent& event);
+            void processMidiEvent(Midi::MidiRollEvent& event) override;
+            void processMidiEvent(Midi::MidiRollChannelOnEvent& event) override;
+            void processMidiEvent(Midi::MidiRollKeyEvent& event) override;
         private:
             int sample_rate;
             double volume;

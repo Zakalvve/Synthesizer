@@ -18,7 +18,7 @@ namespace Audio {
     namespace Midi {
         MidiJsonFile::MidiJsonFile() : roll(nullptr) {};
         MidiJsonFile::~MidiJsonFile() {};
-        bool MidiJsonFile::load(const char* filePath) {
+        bool MidiJsonFile::load(const char* filePath, int sampleRate) {
             FILE* fp = fopen(filePath, "r");
 
             if (!fp) {
@@ -140,7 +140,7 @@ namespace Audio {
                     mjTracks.push_back(std::move(mjTrack));
                 }
 
-                roll = std::make_unique<MidiRoll>(ticksPerQuarterNote, microsecondsPerQuarterNote, tracksCount, std::move(mjTracks));
+                roll = std::make_unique<MidiRoll>(sampleRate, ticksPerQuarterNote, microsecondsPerQuarterNote, tracksCount, std::move(mjTracks));
             }
 
             return roll != nullptr;

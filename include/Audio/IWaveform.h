@@ -5,7 +5,7 @@ namespace Audio {
     class IWaveform {
         public:
             IWaveform(int sampleRate) : sample_rate(sampleRate) {}
-            virtual ~IWaveform() = default;  // Virtual destructor
+            virtual ~IWaveform() = default;
             virtual double sample(int t, double f) const = 0;
 
         protected:

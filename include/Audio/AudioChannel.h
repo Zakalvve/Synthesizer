@@ -2,7 +2,7 @@
 #define AUDIOCHANNEL_H
 
 #include <queue>
-#include <vector>
+#include <unordered_map>
 #include <memory>
 #include <string>
 
@@ -19,14 +19,13 @@ namespace Audio{
             virtual ~AudioChannel();
 
             //Returns a stereo signal
-            AudioSample sample(int t);
+            AudioSample sample();
             bool isActive();
             void playNote(std::string note);
-            void stopNote(std::string note);
+            void releaseNote(std::string note);
         private:
             std::shared_ptr<Oscillator> osc;
-            std::shared_ptr<ADSRProfile> adsr;
-            std::vector<std::shared_ptr<AudioNote>> notes;
+            std::unordered_map<std::string, std::shared_ptr<AudioNote>> notes;
 
             std::queue<std::string> scale;
 
@@ -35,8 +34,6 @@ namespace Audio{
             double volume;
 
             //effects?? HPF etc
-
-            void tickRoll(int t);
             double combineActiveNotes();
             AudioSample panMonoSample(double monoSample);
             double calculateFrequency(std::string note) {

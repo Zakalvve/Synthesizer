@@ -1,8 +1,7 @@
-#include <cmath>
-#include<iostream>
+#include <memory>
+#include <iostream>
 
 #include "Oscillator.h"
-#include "Constants.h"
 #include "IWaveform.h"
 #include "SineWave.h"
 #include "SawtoothWave.h"
@@ -10,9 +9,6 @@
 namespace Audio {
     Oscillator::Oscillator(int sampleRate) : Oscillator(std::make_shared<SineWave>(sampleRate)) { }
     Oscillator::Oscillator(std::shared_ptr<IWaveform> waveform) : waveform(waveform) { }
-    Oscillator::~Oscillator() {
-        std::cout << "Oscillator Destructor" << std::endl;
-    }
 
     double Oscillator::sample(int t, double f) const {
         return waveform->sample(t, f);

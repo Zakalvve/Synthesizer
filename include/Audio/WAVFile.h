@@ -1,11 +1,10 @@
 #ifndef WAVFILE_H
 #define WAVFILE_H
 
-#include "AudioSample.h"
-
-#include <iostream>
 #include <fstream>
 #include <string>
+
+#include "StereoSample.h"
 
 namespace Audio {
     class WAVFile {
@@ -15,7 +14,7 @@ namespace Audio {
 
             void open(const std::string& fileName);
             void close();
-            void sample(const Audio::AudioSample& audio_sample);
+            void sample(const Audio::StereoSample& audio_sample);
             const int& getSampleRate();
             const int& getMaxAmplitude();
         private:

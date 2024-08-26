@@ -1,9 +1,9 @@
 #include <cmath>
-#include <iostream>
 #include <memory>
 
 #include "AudioChannel.h"
 #include "Oscillator.h"
+#include "StereoSample.h"
 
 namespace Audio {
     AudioChannel::AudioChannel(int sampleRate) : sample_rate(sampleRate), pan(0.0), volume(0.5) {
@@ -12,9 +12,9 @@ namespace Audio {
 
     AudioChannel::~AudioChannel() { }
 
-    AudioSample AudioChannel::sample() {
+    StereoSample AudioChannel::sample() {
         double monoSample = combineActiveNotes();
-        AudioSample stereoSample = panMonoSample(monoSample);
+        StereoSample stereoSample = panMonoSample(monoSample);
         return stereoSample * volume;
     }
 
@@ -37,7 +37,7 @@ namespace Audio {
             double sustain_threshold = 0.4;
             double release_duration = 0.1;
 
-            std::unique_ptr<ADSRProfile> adsr = std::make_unique<ADSRProfile>(sample_rate, attack_duration, decay_duration, release_duration, sustain_threshold);
+            std::unique_ptr<AdsrProfile> adsr = std::make_unique<AdsrProfile>(sample_rate, attack_duration, decay_duration, release_duration, sustain_threshold);
 
             notes[note] = std::make_shared<Audio::AudioNote>(osc, std::move(adsr), frequency, 1);
         }
@@ -63,12 +63,12 @@ namespace Audio {
         return value;
     }
 
-    AudioSample AudioChannel::panMonoSample(double monoSample) {
+    StereoSample AudioChannel::panMonoSample(double monoSample) {
         double pan_mapped = ((pan + 1) / 2.0) * (M_PI / 2.0);
 
         double left_sample = monoSample * sin(pan_mapped);
         double right_sample = monoSample * cos(pan_mapped);
 
-        return AudioSample(left_sample, right_sample);
+        return StereoSample(left_sample, right_sample);
     }
 }

@@ -70,7 +70,7 @@ namespace Audio {
                 for(rapidjson::SizeType i = 0; i < jTracks.Size(); i++){
                     const rapidjson::Value& track = jTracks[i];
                     std::string trackName = "";
-                    std::queue<std::unique_ptr<MidiRollEvent>> mjEvents;
+                    std::queue<std::unique_ptr<Events::MidiRollEvent>> mjEvents;
 
                     if (track.HasMember("trackName") && track["trackName"].IsString()){
                         trackName = track["trackName"].GetString();
@@ -102,7 +102,7 @@ namespace Audio {
                                 channel = event["channel"].GetInt();
                             }
 
-                            std::unique_ptr<MidiRollEvent> mjEvent = nullptr;
+                            std::unique_ptr<Events::MidiRollEvent> mjEvent = nullptr;
 
                             if (type == "channel"){
                                 if (subType == "keyOn" || subType == "keyOff"){
@@ -116,17 +116,17 @@ namespace Audio {
                                         velocity = event["velocity"].GetInt();
                                     }
 
-                                    mjEvent = std::make_unique<MidiRollKeyEvent>(deltaTime, type, subType, channel, note, velocity);
+                                    mjEvent = std::make_unique<Events::MidiRollKeyEvent>(deltaTime, type, subType, channel, note, velocity);
 
                                 }
                             } else if (type == "meta") {
                                 if (subType == "channelOn"){
-                                    mjEvent = std::make_unique<MidiRollChannelOnEvent>(deltaTime, type, subType, channel);
+                                    mjEvent = std::make_unique<Events::MidiRollChannelOnEvent>(deltaTime, type, subType, channel);
                                 }
                             }
 
                             if (mjEvent == nullptr){
-                                mjEvent = std::make_unique<MidiRollEvent>(deltaTime, type, subType, channel);
+                                mjEvent = std::make_unique<Events::MidiRollEvent>(deltaTime, type, subType, channel);
                             }
 
                             if (mjEvent) {

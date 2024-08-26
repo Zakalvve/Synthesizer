@@ -1,10 +1,8 @@
-#include <iostream>
-
-#include "ADSRProfile.h"
+#include "AdsrProfile.h"
 #include "Clamp.h"
 
     namespace Audio {
-        ADSRProfile::ADSRProfile(int sampleRate, double attackDuration, double decayDuration, double releaseDuration, double sustainThreshold) :
+        AdsrProfile::AdsrProfile(int sampleRate, double attackDuration, double decayDuration, double releaseDuration, double sustainThreshold) :
             sample_rate(sampleRate),
             is_sustaining(false),
             is_active(false)
@@ -16,7 +14,7 @@
             release_duration = static_cast<int>(releaseDuration * sampleRate);
         }
 
-        double ADSRProfile::calculateAmplitude(int t) {
+        double AdsrProfile::calculateAmplitude(int t) {
             if (t < attack_duration) {
                 double normalized_time = static_cast<double>(t) / static_cast<double>(attack_duration);
                 return max_amplitude * cubeRoot(normalized_time);
@@ -40,16 +38,16 @@
             }
         }
 
-        void ADSRProfile::play() {
+        void AdsrProfile::play() {
             is_active = true;
             is_sustaining = true;
         }
 
-        void ADSRProfile::release() {
+        void AdsrProfile::release() {
             is_sustaining = false;
         }
 
-        bool ADSRProfile::isEnded(){
+        bool AdsrProfile::isEnded(){
             return !is_active;
         }
     }

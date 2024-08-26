@@ -1,18 +1,13 @@
-#include <iostream>
-#include <fstream>
-#include <cmath>
+#include <string>
 #include <vector>
 #include <memory>
-#include <string>
-#include <filesystem>
 
-#include "WAVFile.h"
-#include "AudioSample.h"
-#include "MidiRoll.h"
 #include "MidiJsonFile.h"
-#include "MidiRollTrack.h"
-#include "MidiRollEvent.h"
+#include "MidiRoll.h"
+#include "WAVFile.h"
 #include "Synthesizer.h"
+#include "MidiRollEvent.h"
+#include "StereoSample.h"
 
 using namespace std;
 
@@ -37,16 +32,16 @@ int main() {
 
         while(roll.isRolling() || synth.isPlaying()) {
 
-            std::vector<std::unique_ptr<Audio::Midi::MidiRollEvent>> midiEvents = roll.tickRoll(t);
+            std::vector<std::unique_ptr<Audio::Midi::Events::MidiRollEvent>> midiEvents = roll.tickRoll(t);
 
             for(auto& event: midiEvents){
                 // Uses a visitor pattern
                 event->process(synth);
             }
 
-            Audio::AudioSample steroSample = synth.sample();
-            Audio::AudioSample normalizedSample = steroSample * (static_cast<double>(max_amplitude) * 1);
-            Audio::AudioSample clampedSample = normalizedSample.clamp(-max_amplitude, max_amplitude);
+            Audio::StereoSample steroSample = synth.sample();
+            Audio::StereoSample normalizedSample = steroSample * (static_cast<double>(max_amplitude) * 1);
+            Audio::StereoSample clampedSample = normalizedSample.clamp(-max_amplitude, max_amplitude);
 
             wav.sample(clampedSample);
 
@@ -54,7 +49,7 @@ int main() {
         }
 
         wav.close();
-
     }
+    
     return 0;
 }

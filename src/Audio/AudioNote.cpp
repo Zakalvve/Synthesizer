@@ -1,5 +1,3 @@
-#include <algorithm>
-#include <iostream>
 #include <memory>
 
 #include "AudioNote.h"
@@ -8,7 +6,7 @@
 
 namespace Audio {
 
-    AudioNote::AudioNote(std::shared_ptr<Oscillator> osc, std::unique_ptr<ADSRProfile> adsrProfile, double frequency, double strength) :
+    AudioNote::AudioNote(std::shared_ptr<Oscillator> osc, std::unique_ptr<AdsrProfile> adsrProfile, double frequency, double strength) :
         osc(osc),
         adsr(std::move(adsrProfile)),
         frequency(clamp(frequency, 20.0, 20000.0)),

@@ -1,7 +1,8 @@
-#include <unordered_map>
+#include <string>
 
 #include "Synthesizer.h"
 #include "AudioChannel.h"
+#include "StereoSample.h"
 #include "MidiRollEvent.h"
 #include "MidiRollKeyEvent.h"
 #include "MidiRollChannelOnEvent.h"
@@ -9,11 +10,11 @@
 namespace Audio {
     Synthesizer::Synthesizer(int sampleRate, double volume) : sample_rate(sampleRate), volume(volume) {}
 
-    AudioSample Synthesizer::sample(){
-        AudioSample sample = AudioSample(0,0);
+    StereoSample Synthesizer::sample(){
+        StereoSample sample = StereoSample(0,0);
 
         for(auto& channel : channels){
-            AudioSample channelSample = channel.second.sample();
+            StereoSample channelSample = channel.second.sample();
             sample = sample + channelSample;
         }
 
@@ -30,11 +31,11 @@ namespace Audio {
         return false;
     }
 
-    void Synthesizer::processMidiEvent(Midi::MidiRollEvent& event){ 
+    void Synthesizer::processMidiEvent(Midi::Events::MidiRollEvent& event){ 
         // Do nothing with event types that are not implemented
     }
 
-    void Synthesizer::processMidiEvent(Midi::MidiRollChannelOnEvent& event) {
+    void Synthesizer::processMidiEvent(Midi::Events::MidiRollChannelOnEvent& event) {
         int channelIndex = event.getChannel();
         if (channels.find(channelIndex) ==  channels.end()){
             // Channel does not exist
@@ -42,7 +43,7 @@ namespace Audio {
         }
     }
 
-    void Synthesizer::processMidiEvent(Midi::MidiRollKeyEvent& event){
+    void Synthesizer::processMidiEvent(Midi::Events::MidiRollKeyEvent& event){
         int channelIndex = event.getChannel();
         if (auto search = channels.find(channelIndex); search != channels.end()){
             const std::string& eventType = event.getSubType();

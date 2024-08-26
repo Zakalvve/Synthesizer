@@ -3,13 +3,13 @@
 
 #include <memory>
 
-#include "ADSRProfile.h"
 #include "Oscillator.h"
+#include "AdsrProfile.h"
 
 namespace Audio {
     class AudioNote {
         public:
-            AudioNote(std::shared_ptr<Oscillator> osc, std::unique_ptr<ADSRProfile> adsrProfile, double frequency, double strength);
+            AudioNote(std::shared_ptr<Oscillator> osc, std::unique_ptr<AdsrProfile> adsrProfile, double frequency, double strength);
             virtual ~AudioNote() = default;
 
             double sample();
@@ -21,7 +21,7 @@ namespace Audio {
         private:
             int harmonics = 12;
             std::shared_ptr<Oscillator> osc;
-            std::unique_ptr<ADSRProfile> adsr;
+            std::unique_ptr<AdsrProfile> adsr;
             double frequency;
             double strength;
             int t;

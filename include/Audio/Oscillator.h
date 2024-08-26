@@ -10,7 +10,7 @@ namespace Audio {
         public:
             Oscillator(int sampleRate);
             Oscillator(std::shared_ptr<IWaveform> waveform);
-            virtual ~Oscillator();
+            virtual ~Oscillator() = default;
 
             double sample(int t, double f) const;
 

@@ -2,6 +2,7 @@
 #include <fstream>
 
 #include "WAVFile.h"
+#include "StereoSample.h"
 
 namespace Audio {
     WAVFile::WAVFile(bool isStereo, int sampleRate, int bitsPerSample, int max_amplitude) :
@@ -60,7 +61,7 @@ namespace Audio {
         }
     }
 
-    void WAVFile::sample(const AudioSample& as) {
+    void WAVFile::sample(const StereoSample& as) {
         wab(wav, as.c1, bits_per_sample / 8);
         wab(wav, as.c2, bits_per_sample / 8);
     }

@@ -1,8 +1,10 @@
-
-#include <cmath>
 #include <vector>
+#include <memory>
+#include <cmath>
 
 #include "MidiRoll.h"
+#include "MidiRollTrack.h"
+#include "MidiRollEvent.h"
 
 namespace Audio {
     namespace Midi {
@@ -16,8 +18,8 @@ namespace Audio {
             }
         }
 
-        std::vector<std::unique_ptr<MidiRollEvent>> MidiRoll::tickRoll(int t) {
-            std::vector<std::unique_ptr<MidiRollEvent>> eventsThisTick;
+        std::vector<std::unique_ptr<Events::MidiRollEvent>> MidiRoll::tickRoll(int t) {
+            std::vector<std::unique_ptr<Events::MidiRollEvent>> eventsThisTick;
 
             if (t % samplesPerTick == 0 && isRolling()) {
                 while (activeEvent->getDeltaTime() == ticksSinceLastEvent)

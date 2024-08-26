@@ -2,8 +2,10 @@
 #define MIDIROLL_H
 
 #include <vector>
+#include <memory>
 
 #include "MidiRollTrack.h"
+#include "MidiRollEvent.h"
 
 namespace Audio {
     namespace Midi {
@@ -15,7 +17,7 @@ namespace Audio {
                 int getTicksPerQuarterNote() const { return ticksPerQuarterNote; }
                 int getMicrosecondsPerQuarterNote() const { return microsecondsPerQuarterNote; }
                 int getTracksCount() const { return tracksCount; }
-                std::vector<std::unique_ptr<MidiRollEvent>> tickRoll(int t);
+                std::vector<std::unique_ptr<Events::MidiRollEvent>> tickRoll(int t);
                 void setTrack(int i);
                 void setEvent(MidiRollTrack& track);
                 bool isRolling();
@@ -31,7 +33,7 @@ namespace Audio {
 
                 std::vector<std::unique_ptr<MidiRollTrack>> tracks;
                 MidiRollTrack* activeTrack;
-                std::unique_ptr<MidiRollEvent> activeEvent;
+                std::unique_ptr<Events::MidiRollEvent> activeEvent;
         };
     }
 }

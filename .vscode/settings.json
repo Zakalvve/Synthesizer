@@ -61,6 +61,7 @@
         "codecvt": "cpp",
         "ratio": "cpp",
         "iomanip": "cpp",
-        "queue": "cpp"
+        "queue": "cpp",
+        "cstdarg": "cpp"
     }
 }

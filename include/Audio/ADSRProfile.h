@@ -4,10 +4,10 @@
 #include <cmath>
 
 namespace Audio {
-    class ADSRProfile {
+    class AdsrProfile {
         public:
-            ADSRProfile(int sampleRate, double attackDuration, double decayDuration, double releaseDuration, double sustainThreshold);
-            virtual ~ADSRProfile() = default;
+            AdsrProfile(int sampleRate, double attackDuration, double decayDuration, double releaseDuration, double sustainThreshold);
+            virtual ~AdsrProfile() = default;
 
             double calculateAmplitude(int t);
             void play();

@@ -1,8 +1,8 @@
 #ifndef MIDIJSONFILE_H
 #define MIDIJSONFILE_H
 
-#include <cstdint>
 #include <memory>
+#include <cstdint>
 
 #include "MidiRoll.h"
 

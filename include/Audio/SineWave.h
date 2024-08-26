@@ -1,10 +1,10 @@
 #ifndef SINEWAVE_H_INCLUDED
 #define SINEWAVE_H_INCLUDED
 
+#include <cmath>
+
 #include "IWaveform.h"
 #include "Constants.h"
-
-#include <cmath>
 
 namespace Audio {
     class SineWave : public IWaveform {

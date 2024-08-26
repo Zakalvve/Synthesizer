@@ -18,7 +18,13 @@
                 "-I${workspaceFolder}/include/rapidjson/error",
                 "-I${workspaceFolder}/include/rapidjson/internal",
                 "-o",
-                "${workspaceFolder}\\Synthesizer.exe"
+                "${workspaceFolder}\\Synthesizer.exe",
+                "-lpropsys",
+                "-lole32",
+                "-loleaut32",
+                "-luuid",
+                "-lmfplat",
+                "-lmf"
             ],
             "options": {
                 "cwd": "${workspaceFolder}"

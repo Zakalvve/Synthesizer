@@ -4,7 +4,7 @@
 #include <vector>
 #include <memory>
 #include <string>
-#include <filesystem> // C++17 and later
+#include <filesystem>
 
 #include "WAVFile.h"
 #include "AudioSample.h"
@@ -40,7 +40,7 @@ int main() {
             std::vector<std::unique_ptr<Audio::Midi::MidiRollEvent>> midiEvents = roll.tickRoll(t);
 
             for(auto& event: midiEvents){
-                // Visitor pattern
+                // Uses a visitor pattern
                 event->process(synth);
             }
 

@@ -7,7 +7,7 @@
 
 namespace Audio {
     AudioChannel::AudioChannel(int sampleRate) : sample_rate(sampleRate), pan(0.0), volume(0.5) {
-        osc = std::make_shared<Audio::Oscillator>(Audio::Oscillator::createSineWave(sampleRate));
+        osc = std::make_shared<Audio::Oscillator>(Audio::Oscillator::createSawtoothWave(sampleRate));
     }
 
     AudioChannel::~AudioChannel() { }

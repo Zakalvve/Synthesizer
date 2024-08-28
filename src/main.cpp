@@ -31,7 +31,7 @@ int main() {
 
         Audio::Synthesizer synth(sample_rate, 1.0);
 
-        wav.open("test.wav");
+        wav.open("first-four-moonlight-no-harmonics-tri.wav");
 
         int t = 0;
 

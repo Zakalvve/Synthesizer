@@ -11,7 +11,8 @@
                 "UNICODE",
                 "_UNICODE"
             ],
-            "intelliSenseMode": "windows-msvc-x64"
+            "intelliSenseMode": "windows-msvc-x64",
+            "cppStandard": "c++20"
         }
     ],
     "version": 4

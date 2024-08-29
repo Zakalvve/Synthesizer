@@ -1,4 +1,5 @@
 #include <cmath>
+#include <numbers>
 #include <iostream>
 #include <memory>
 
@@ -64,7 +65,7 @@ namespace Audio {
     }
 
     AudioSample AudioChannel::panMonoSample(double monoSample) {
-        double pan_mapped = ((pan + 1) / 2.0) * (M_PI / 2.0);
+        double pan_mapped = ((pan + 1) / 2.0) * (std::numbers::pi / 2.0);
 
         double left_sample = monoSample * sin(pan_mapped);
         double right_sample = monoSample * cos(pan_mapped);

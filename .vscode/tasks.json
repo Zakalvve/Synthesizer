@@ -10,6 +10,7 @@
                 "${workspaceFolder}/src/*.cpp",
                 "${workspaceFolder}/src/Audio/*.cpp",
                 "${workspaceFolder}/src/Audio/Midi/*.cpp",
+                "-std=c++20",
                 "-I${workspaceFolder}/include",
                 "-I${workspaceFolder}/include/Audio",
                 "-I${workspaceFolder}/include/Audio/Midi",

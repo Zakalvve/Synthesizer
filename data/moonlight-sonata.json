@@ -1,7 +1,7 @@
 {
     "header": {
         "ticksPerQuarterNote": 480,
-        "microsecondsPerQuarterNote": 635000,
+        "microsecondsPerQuarterNote": 700000,
         "tracks": 1
     },
     "tracks": [
@@ -236,6 +236,552 @@
                     "subType": "keyOff",
                     "channel": 0,
                     "note": "C#2",
+                    "velocity": 100
+                },
+                {
+                    "deltaTime": 0,
+                    "type": "meta",
+                    "subType": "endOfTrack"
+                },
+                
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                {
+                    "deltaTime": 0,
+                    "type": "channel",
+                    "subType": "keyOn",
+                    "channel": 0,
+                    "note": "B2",
+                    "velocity": 100
+                },
+                {
+                    "deltaTime": 0,
+                    "type": "channel",
+                    "subType": "keyOn",
+                    "channel": 0,
+                    "note": "B1",
+                    "velocity": 100
+                },
+                {
+                    "deltaTime": 0,
+                    "type": "channel",
+                    "subType": "keyOn",
+                    "channel": 0,
+                    "note": "G#3",
+                    "velocity": 100
+                },
+                {
+                    "deltaTime": 240,
+                    "type": "channel",
+                    "subType": "keyOff",
+                    "channel": 0,
+                    "note": "G#3",
+                    "velocity": 100
+                },
+                {
+                    "deltaTime": 0,
+                    "type": "channel",
+                    "subType": "keyOn",
+                    "channel": 0,
+                    "note": "C#4",
+                    "velocity": 100
+                },
+                {
+                    "deltaTime": 240,
+                    "type": "channel",
+                    "subType": "keyOff",
+                    "channel": 0,
+                    "note": "C#4",
+                    "velocity": 100
+                },
+                {
+                    "deltaTime": 0,
+                    "type": "channel",
+                    "subType": "keyOn",
+                    "channel": 0,
+                    "note": "E4",
+                    "velocity": 100
+                },
+                {
+                    "deltaTime": 240,
+                    "type": "channel",
+                    "subType": "keyOff",
+                    "channel": 0,
+                    "note": "E4",
+                    "velocity": 100
+                },
+                {
+                    "deltaTime": 0,
+                    "type": "channel",
+                    "subType": "keyOn",
+                    "channel": 0,
+                    "note": "G#3",
+                    "velocity": 100
+                },
+                {
+                    "deltaTime": 240,
+                    "type": "channel",
+                    "subType": "keyOff",
+                    "channel": 0,
+                    "note": "G#3",
+                    "velocity": 100
+                },
+                {
+                    "deltaTime": 0,
+                    "type": "channel",
+                    "subType": "keyOn",
+                    "channel": 0,
+                    "note": "C#4",
+                    "velocity": 100
+                },
+                {
+                    "deltaTime": 240,
+                    "type": "channel",
+                    "subType": "keyOff",
+                    "channel": 0,
+                    "note": "C#4",
+                    "velocity": 100
+                },
+                {
+                    "deltaTime": 0,
+                    "type": "channel",
+                    "subType": "keyOn",
+                    "channel": 0,
+                    "note": "E4",
+                    "velocity": 100
+                },
+                {
+                    "deltaTime": 240,
+                    "type": "channel",
+                    "subType": "keyOff",
+                    "channel": 0,
+                    "note": "E4",
+                    "velocity": 100
+                },
+                {
+                    "deltaTime": 0,
+                    "type": "channel",
+                    "subType": "keyOn",
+                    "channel": 0,
+                    "note": "G#3",
+                    "velocity": 100
+                },
+                {
+                    "deltaTime": 240,
+                    "type": "channel",
+                    "subType": "keyOff",
+                    "channel": 0,
+                    "note": "G#3",
+                    "velocity": 100
+                },
+                {
+                    "deltaTime": 0,
+                    "type": "channel",
+                    "subType": "keyOn",
+                    "channel": 0,
+                    "note": "C#4",
+                    "velocity": 100
+                },
+                {
+                    "deltaTime": 240,
+                    "type": "channel",
+                    "subType": "keyOff",
+                    "channel": 0,
+                    "note": "C#4",
+                    "velocity": 100
+                },
+                {
+                    "deltaTime": 0,
+                    "type": "channel",
+                    "subType": "keyOn",
+                    "channel": 0,
+                    "note": "E4",
+                    "velocity": 100
+                },
+                {
+                    "deltaTime": 240,
+                    "type": "channel",
+                    "subType": "keyOff",
+                    "channel": 0,
+                    "note": "E4",
+                    "velocity": 100
+                },
+                {
+                    "deltaTime": 0,
+                    "type": "channel",
+                    "subType": "keyOn",
+                    "channel": 0,
+                    "note": "G#3",
+                    "velocity": 100
+                },
+                {
+                    "deltaTime": 240,
+                    "type": "channel",
+                    "subType": "keyOff",
+                    "channel": 0,
+                    "note": "G#3",
+                    "velocity": 100
+                },
+                {
+                    "deltaTime": 0,
+                    "type": "channel",
+                    "subType": "keyOn",
+                    "channel": 0,
+                    "note": "C#4",
+                    "velocity": 100
+                },
+                {
+                    "deltaTime": 240,
+                    "type": "channel",
+                    "subType": "keyOff",
+                    "channel": 0,
+                    "note": "C#4",
+                    "velocity": 100
+                },
+                {
+                    "deltaTime": 0,
+                    "type": "channel",
+                    "subType": "keyOn",
+                    "channel": 0,
+                    "note": "E4",
+                    "velocity": 100
+                },
+                {
+                    "deltaTime": 240,
+                    "type": "channel",
+                    "subType": "keyOff",
+                    "channel": 0,
+                    "note": "E4",
+                    "velocity": 100
+                },
+                {
+                    "deltaTime": 0,
+                    "type": "channel",
+                    "subType": "keyOff",
+                    "channel": 0,
+                    "note": "B2",
+                    "velocity": 100
+                },
+                {
+                    "deltaTime": 0,
+                    "type": "channel",
+                    "subType": "keyOff",
+                    "channel": 0,
+                    "note": "B1",
+                    "velocity": 100
+                },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                {
+                    "deltaTime": 0,
+                    "type": "channel",
+                    "subType": "keyOn",
+                    "channel": 0,
+                    "note": "A2",
+                    "velocity": 100
+                },
+                {
+                    "deltaTime": 0,
+                    "type": "channel",
+                    "subType": "keyOn",
+                    "channel": 0,
+                    "note": "A1",
+                    "velocity": 100
+                },
+                {
+                    "deltaTime": 0,
+                    "type": "channel",
+                    "subType": "keyOn",
+                    "channel": 0,
+                    "note": "A3",
+                    "velocity": 100
+                },
+                {
+                    "deltaTime": 240,
+                    "type": "channel",
+                    "subType": "keyOff",
+                    "channel": 0,
+                    "note": "A3",
+                    "velocity": 100
+                },
+                {
+                    "deltaTime": 0,
+                    "type": "channel",
+                    "subType": "keyOn",
+                    "channel": 0,
+                    "note": "C#4",
+                    "velocity": 100
+                },
+                {
+                    "deltaTime": 240,
+                    "type": "channel",
+                    "subType": "keyOff",
+                    "channel": 0,
+                    "note": "C#4",
+                    "velocity": 100
+                },
+                {
+                    "deltaTime": 0,
+                    "type": "channel",
+                    "subType": "keyOn",
+                    "channel": 0,
+                    "note": "E4",
+                    "velocity": 100
+                },
+                {
+                    "deltaTime": 240,
+                    "type": "channel",
+                    "subType": "keyOff",
+                    "channel": 0,
+                    "note": "E4",
+                    "velocity": 100
+                },
+                {
+                    "deltaTime": 0,
+                    "type": "channel",
+                    "subType": "keyOn",
+                    "channel": 0,
+                    "note": "A3",
+                    "velocity": 100
+                },
+                {
+                    "deltaTime": 240,
+                    "type": "channel",
+                    "subType": "keyOff",
+                    "channel": 0,
+                    "note": "A3",
+                    "velocity": 100
+                },
+                {
+                    "deltaTime": 0,
+                    "type": "channel",
+                    "subType": "keyOn",
+                    "channel": 0,
+                    "note": "C#4",
+                    "velocity": 100
+                },
+                {
+                    "deltaTime": 240,
+                    "type": "channel",
+                    "subType": "keyOff",
+                    "channel": 0,
+                    "note": "C#4",
+                    "velocity": 100
+                },
+                {
+                    "deltaTime": 0,
+                    "type": "channel",
+                    "subType": "keyOn",
+                    "channel": 0,
+                    "note": "E4",
+                    "velocity": 100
+                },
+                {
+                    "deltaTime": 240,
+                    "type": "channel",
+                    "subType": "keyOff",
+                    "channel": 0,
+                    "note": "E4",
+                    "velocity": 100
+                },
+                {
+                    "deltaTime": 0,
+                    "type": "channel",
+                    "subType": "keyOff",
+                    "channel": 0,
+                    "note": "A2",
+                    "velocity": 100
+                },
+                {
+                    "deltaTime": 0,
+                    "type": "channel",
+                    "subType": "keyOff",
+                    "channel": 0,
+                    "note": "A1",
+                    "velocity": 100
+                },
+                {
+                    "deltaTime": 0,
+                    "type": "channel",
+                    "subType": "keyOn",
+                    "channel": 0,
+                    "note": "F#2",
+                    "velocity": 100
+                },
+                {
+                    "deltaTime": 0,
+                    "type": "channel",
+                    "subType": "keyOn",
+                    "channel": 0,
+                    "note": "F#1",
+                    "velocity": 100
+                },
+                {
+                    "deltaTime": 0,
+                    "type": "channel",
+                    "subType": "keyOn",
+                    "channel": 0,
+                    "note": "A3",
+                    "velocity": 100
+                },
+                {
+                    "deltaTime": 240,
+                    "type": "channel",
+                    "subType": "keyOff",
+                    "channel": 0,
+                    "note": "A3",
+                    "velocity": 100
+                },
+                {
+                    "deltaTime": 0,
+                    "type": "channel",
+                    "subType": "keyOn",
+                    "channel": 0,
+                    "note": "D4",
+                    "velocity": 100
+                },
+                {
+                    "deltaTime": 240,
+                    "type": "channel",
+                    "subType": "keyOff",
+                    "channel": 0,
+                    "note": "D4",
+                    "velocity": 100
+                },
+                {
+                    "deltaTime": 0,
+                    "type": "channel",
+                    "subType": "keyOn",
+                    "channel": 0,
+                    "note": "F#4",
+                    "velocity": 100
+                },
+                {
+                    "deltaTime": 240,
+                    "type": "channel",
+                    "subType": "keyOff",
+                    "channel": 0,
+                    "note": "F#4",
+                    "velocity": 100
+                },
+                {
+                    "deltaTime": 0,
+                    "type": "channel",
+                    "subType": "keyOn",
+                    "channel": 0,
+                    "note": "A3",
+                    "velocity": 100
+                },
+                {
+                    "deltaTime": 240,
+                    "type": "channel",
+                    "subType": "keyOff",
+                    "channel": 0,
+                    "note": "A3",
+                    "velocity": 100
+                },
+                {
+                    "deltaTime": 0,
+                    "type": "channel",
+                    "subType": "keyOn",
+                    "channel": 0,
+                    "note": "D#4",
+                    "velocity": 100
+                },
+                {
+                    "deltaTime": 240,
+                    "type": "channel",
+                    "subType": "keyOff",
+                    "channel": 0,
+                    "note": "D#4",
+                    "velocity": 100
+                },
+                {
+                    "deltaTime": 0,
+                    "type": "channel",
+                    "subType": "keyOn",
+                    "channel": 0,
+                    "note": "F#4",
+                    "velocity": 100
+                },
+                {
+                    "deltaTime": 240,
+                    "type": "channel",
+                    "subType": "keyOff",
+                    "channel": 0,
+                    "note": "F#4",
+                    "velocity": 100
+                },
+                {
+                    "deltaTime": 0,
+                    "type": "channel",
+                    "subType": "keyOff",
+                    "channel": 0,
+                    "note": "F#2",
+                    "velocity": 100
+                },
+                {
+                    "deltaTime": 0,
+                    "type": "channel",
+                    "subType": "keyOff",
+                    "channel": 0,
+                    "note": "F#1",
                     "velocity": 100
                 },
                 {

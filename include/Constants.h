@@ -1,12 +1,12 @@
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 
-#include <cmath>
+#include <numbers>
 #include <string>
 #include <unordered_map>
 
 namespace MathConstants {
-    const double TWO_PI = 2.0 * M_PI;
+    const double TWO_PI = 2.0 * std::numbers::pi;
 }
 
 namespace MusicalConstants {

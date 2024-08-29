@@ -19,7 +19,7 @@ namespace Audio {
         protected:
             
         private:
-            int harmonics = 12;
+            int harmonics = 1;
             std::shared_ptr<Oscillator> osc;
             std::unique_ptr<AdsrProfile> adsr;
             double frequency;

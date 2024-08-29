@@ -1,4 +1,6 @@
 #include <cmath>
+#include <numbers>
+#include <iostream>
 #include <memory>
 
 #include "AudioChannel.h"
@@ -7,7 +9,7 @@
 
 namespace Audio {
     AudioChannel::AudioChannel(int sampleRate) : sample_rate(sampleRate), pan(0.0), volume(0.5) {
-        osc = std::make_shared<Audio::Oscillator>(Audio::Oscillator::createSineWave(sampleRate));
+        osc = std::make_shared<Audio::Oscillator>(Audio::Oscillator::createSawtoothWave(sampleRate));
     }
 
     AudioChannel::~AudioChannel() { }
@@ -64,7 +66,7 @@ namespace Audio {
     }
 
     StereoSample AudioChannel::panMonoSample(double monoSample) {
-        double pan_mapped = ((pan + 1) / 2.0) * (M_PI / 2.0);
+        double pan_mapped = ((pan + 1) / 2.0) * (std::numbers::pi / 2.0);
 
         double left_sample = monoSample * sin(pan_mapped);
         double right_sample = monoSample * cos(pan_mapped);

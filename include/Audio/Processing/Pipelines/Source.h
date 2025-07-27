@@ -3,17 +3,15 @@
 
 #include "Sink.h"
 
-namespace Audio {
-    namespace Processing {
-        namespace Pipelines {
-            template<typename... Ts>
-            class Source {
-                public:
-                    virtual void produce(Sink<Ts...>* consumer) = 0;
-                    virtual ~Source() = default;
-            };
-        }
-    }
+namespace Audio::Processing::Pipelines {
+
+    template<typename T>
+    class Source {
+    public:
+        virtual void produce(Sink<T>* consumer) = 0;
+        virtual ~Source() = default;
+    };
+
 }
 
-#endif //SOURCE_H
+#endif // SOURCE_H

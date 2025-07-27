@@ -9,6 +9,10 @@ include_directories(
         include
         include/Audio
         include/Audio/Midi
+        include/Audio/Processing
+        include/Audio/Processing/Pipelines
+        include/Audio/Processing/Pipelines/Processors
+        include/Audio/Processing/Components
         include/Utils
         include/rapidjson
 )

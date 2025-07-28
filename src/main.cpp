@@ -35,9 +35,20 @@ public:
     }
 };
 
+class AverageProcessor : public Processor<std::vector<double>, double> {
+public:
+    double process(const std::vector<double>& values) override {
+        if (values.empty()) return 0.0;
+        double sum = 0.0;
+        for (double v : values) sum += v;
+        return sum / values.size();
+    }
+};
+
 
 int main() {
     try {
+        // === First test: simple pipeline arithmatic ===
         Node<double, double> start(std::make_unique<AddOne>());
         Node<double, double> second(std::make_unique<MultiplyByTwo>());
         Node<double, double> third(std::make_unique<MultiplyByTwo>());
@@ -93,6 +104,42 @@ int main() {
         // Read result
         int logicResult = logicNode.getOutputValue<int>("out");
         std::cout << "Conditional logic result (should be 7): " << logicResult << std::endl;
+
+        // === Third test: multi input functionality ===
+        Node<std::vector<double>, double> avgNode(std::make_unique<AverageProcessor>());
+        avgNode.inputs().addMultiPort<double>("in");
+        avgNode.addOutput<double>("out");
+
+        // Create 3 input nodes
+        Node<double, double> input1(nullptr);
+        input1.addOutput<double>("out");
+
+        Node<double, double> input2(nullptr);
+        input2.addOutput<double>("out");
+
+        Node<double, double> input3(nullptr);
+        input3.addOutput<double>("out");
+
+        // Connect each output to the avgNode multiport input
+        auto* multiPort = avgNode.inputs().getMultiPort<double>("in");
+        input1.outputs().getPort<double>("out")->connect(multiPort);
+        multiPort->registerInput();
+
+        input2.outputs().getPort<double>("out")->connect(multiPort);
+        multiPort->registerInput();
+
+        input3.outputs().getPort<double>("out")->connect(multiPort);
+        multiPort->registerInput();
+
+        // Feed inputs
+        input1.outputs().getPort<double>("out")->consume(4.0);
+        input2.outputs().getPort<double>("out")->consume(8.0);
+        input3.outputs().getPort<double>("out")->consume(6.0);
+
+        // Read and print result
+        double result2 = avgNode.getOutputValue<double>("out");
+        std::cout << "Average result (should be 6): " << result2 << std::endl;
+
     }
     catch (const std::exception& ex) {
         std::cerr << "[EXCEPTION] " << ex.what() << std::endl;

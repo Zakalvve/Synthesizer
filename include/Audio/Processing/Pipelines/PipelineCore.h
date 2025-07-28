@@ -47,6 +47,17 @@ std::string to_string_fallback(const T& val) {
     return oss.str();
 }
 
+inline std::string to_string_fallback(const std::vector<double>& vals) {
+    std::ostringstream oss;
+    oss << "[";
+    for (size_t i = 0; i < vals.size(); ++i) {
+        if (i > 0) oss << ", ";
+        oss << vals[i];
+    }
+    oss << "]";
+    return oss.str();
+}
+
 template<typename... Ts>
 std::string tuple_to_string(const std::tuple<Ts...>& tpl) {
     std::ostringstream oss;
@@ -68,7 +79,7 @@ public:
         if constexpr (requires { std::tuple_size<TIn>::value; }) {
             PIPELINE_LOG("Processor consuming: " << tuple_to_string(value));
         } else {
-            PIPELINE_LOG("Processor consuming: " << value);
+            PIPELINE_LOG("Processor consuming: " << to_string_fallback(value));
         }
         if (sink)
             sink->consume(process(value));
@@ -102,7 +113,7 @@ public:
     }
 
     void consume(const T& val) override {
-        PIPELINE_LOG("Port consuming: " << val);
+        PIPELINE_LOG("Port consuming: " << to_string_fallback(val));
         if (filled) return;
         buffer = val;
         filled = true;
@@ -116,7 +127,8 @@ public:
     }
 
     void produce(Sink<T>* consumer) override {
-        if (filled) consumer->consume(buffer);
+        if (filled)
+            consumer->consume(buffer);
     }
 
     void connect(Sink<T>* sink) {
@@ -138,6 +150,47 @@ private:
     IPortOwner* owner;
 };
 
+template<typename T>
+class MultiPort : public PortBase, public Sink<T>, public Source<std::vector<T>> {
+public:
+    explicit MultiPort(IPortOwner* owner) : owner(owner) {
+        if (!owner) throw std::runtime_error("MultiPort must have an owner");
+    }
+
+    void consume(const T& val) override {
+        PIPELINE_LOG("MultiPort consuming: " << to_string_fallback(val));
+        buffer.push_back(val);
+        if (buffer.size() == connections && owner)
+            owner->onPortFilled();
+    }
+
+    void produce(Sink<std::vector<T>>* consumer) override {
+        if (!buffer.empty())
+            consumer->consume(buffer);
+    }
+
+    void connect(Sink<std::vector<T>>* sink) {
+        PIPELINE_LOG("Connecting vector sink to multiport");
+        sinks.push_back(sink);
+    }
+
+    void registerInput() { ++connections; }
+
+    bool isFilled() const override { return buffer.size() == connections; }
+    void flush() override {
+        PIPELINE_LOG("Flushing multiport");
+        buffer.clear();
+    }
+
+    const std::vector<T>& getAll() const { return buffer; }
+
+private:
+    std::vector<T> buffer;
+    int connections = 0;
+    std::vector<Sink<std::vector<T>>*> sinks;
+    IPortOwner* owner;
+};
+
 class PortBank : public IPortOwner {
 public:
     explicit PortBank(IPortOwner* owner) : owner(owner) {}
@@ -148,6 +201,15 @@ public:
         auto port = std::make_unique<Port<T>>(this);
         ports.emplace(name, std::move(port));
         types.emplace(name, std::type_index(typeid(T)));
+        orderedNames.push_back(name);
+    }
+
+    template<typename T>
+    void addMultiPort(const std::string& name) {
+        PIPELINE_LOG("Adding multiport: " << name);
+        auto port = std::make_unique<MultiPort<T>>(this);
+        ports.emplace(name, std::move(port));
+        types.emplace(name, std::type_index(typeid(std::vector<T>)));
         orderedNames.push_back(name);
     }
 
@@ -164,7 +226,7 @@ public:
     }
 
     template<typename T>
-    Port<T>* getPort(const std::string& name) const {
+    const Port<T>* getPort(const std::string& name) const {
         auto typeIt = types.find(name);
         if (typeIt == types.end())
             throw std::runtime_error("Port not found: " + name);
@@ -172,7 +234,31 @@ public:
         if (typeIt->second != std::type_index(typeid(T)))
             throw std::runtime_error("Type mismatch on port: " + name);
 
-        return static_cast<Port<T>*>(ports.at(name).get());
+        return static_cast<const Port<T>*>(ports.at(name).get());
+    }
+
+    template<typename T>
+    MultiPort<T>* getMultiPort(const std::string& name) {
+        auto typeIt = types.find(name);
+        if (typeIt == types.end())
+            throw std::runtime_error("MultiPort not found: " + name);
+
+        if (typeIt->second != std::type_index(typeid(std::vector<T>)))
+            throw std::runtime_error("Type mismatch on multiport: " + name);
+
+        return static_cast<MultiPort<T>*>(ports.at(name).get());
+    }
+
+    template<typename T>
+    const MultiPort<T>* getMultiPort(const std::string& name) const {
+        auto typeIt = types.find(name);
+        if (typeIt == types.end())
+            throw std::runtime_error("MultiPort not found: " + name);
+
+        if (typeIt->second != std::type_index(typeid(std::vector<T>)))
+            throw std::runtime_error("Type mismatch on multiport: " + name);
+
+        return static_cast<const MultiPort<T>*>(ports.at(name).get());
     }
 
     bool allFilled() const {
@@ -208,14 +294,19 @@ private:
 };
 
 namespace detail {
-    template<typename Tuple, typename... Values, std::size_t... Is>
-    Tuple tupleFromPorts(const PortBank& bank, const std::vector<std::string>& names, std::index_sequence<Is...>) {
-        return std::make_tuple(bank.getPort<std::tuple_element_t<Is, Tuple>>(names[Is])->get()...);
+    template<typename T>
+    auto getPortValue(const PortBank& bank, const std::string& name) {
+        if constexpr (requires { typename T::value_type; }) {
+            return bank.getMultiPort<typename T::value_type>(name)->getAll();
+        } else {
+            return bank.getPort<T>(name)->get();
+        }
     }
 
     template<typename Tuple, std::size_t... Is>
     Tuple unpackPorts(const PortBank& bank, std::index_sequence<Is...>) {
-        return tupleFromPorts<Tuple, std::tuple_element_t<Is, Tuple>...>(bank, bank.orderedPortNames(), std::index_sequence<Is...>{});
+        const auto& names = bank.orderedPortNames();
+        return std::make_tuple(getPortValue<std::tuple_element_t<Is, Tuple>>(bank, names[Is])...);
     }
 }
 
@@ -249,7 +340,7 @@ public:
 
     template<typename T>
     void feedInput(const std::string& name, const T& value) {
-        PIPELINE_LOG("Feeding input " << name << ": " << value);
+        PIPELINE_LOG("Feeding input " << name << ": " << to_string_fallback(value));
         inputBank.getPort<T>(name)->consume(value);
     }
 
@@ -299,4 +390,4 @@ void Node<TIn, TOut>::writeOutputs(const TOut& value) {
     outputBank.template getPort<TOut>("out")->consume(value);
 }
 
-#endif //PIPELINECORE_H
+#endif // PIPELINECORE_H

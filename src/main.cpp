@@ -1,68 +1,102 @@
 #include <iostream>
-#include <tuple>
-#include <vector>
-#include <memory>
-#include <numeric>
-#include <algorithm>
+#include "PipelineCore.h"
 
-#include "InputNode.h"
-#include "MultiCompositeNode.h"
-#include "Processor.h"
+class AddOne : public Processor<double, double> {
+    double process(const double& x) override { return x + 1; }
+};
 
-using namespace Audio::Processing::Pipelines;
-using namespace Audio::Processing::Pipelines::Processors;
+class MultiplyByTwo : public Processor<double, double> {
+    double process(const double& x) override { return x * 2; }
+};
 
-// --- Processor: Multiply average int by count of true bools ---
-class BoolIntAggregator : public Processor<std::tuple<std::vector<bool>, std::vector<int>>, double> {
-protected:
-    double process(const std::tuple<std::vector<bool>, std::vector<int>>& input) override {
-        const auto& bools = std::get<0>(input);
-        const auto& ints = std::get<1>(input);
+class MinusOne : public Processor<double, double> {
+    double process(const double& x) override { return x - 1; }
+};
 
-        int trueCount = static_cast<int>(std::count(bools.begin(), bools.end(), true));
-        double avgInt = std::accumulate(ints.begin(), ints.end(), 0.0) / ints.size();
-        double result = trueCount * avgInt;
+class HalfInput : public Processor<double, double> {
+    double process(const double& x) override { return x / 2.0; }
+};
 
-        std::cout << "[Aggregator] " << trueCount << " true(s), avg int = " << avgInt
-                  << " => Output: " << result << "\n";
+class ToInteger : public Processor<double, int> {
+    int process(const double& x) override { return static_cast<int>(x); }
+};
 
-        return result;
+template<typename T>
+class PassThrough : public Processor<T, T> {
+    T process(const T& x) override { return x; }
+};
+
+class ConditionalDouble : public Processor<std::tuple<bool, int>, int> {
+public:
+    int process(const std::tuple<bool, int>& input) override {
+        bool condition = std::get<0>(input);
+        int value = std::get<1>(input);
+        return condition ? value * 2 : value;
     }
 };
 
-// --- Output processor ---
-class PrintProcessor : public Processor<double, double> {
-protected:
-    double process(const double& value) override {
-        std::cout << "[Output] Received: " << value << "\n";
-        return value;
-    }
-};
 
 int main() {
-    InputNode<bool> b1, b2;
-    InputNode<int> i1, i2;
+    try {
+        Node<double, double> start(std::make_unique<AddOne>());
+        Node<double, double> second(std::make_unique<MultiplyByTwo>());
+        Node<double, double> third(std::make_unique<MultiplyByTwo>());
+        Node<double, double> fourth(std::make_unique<MinusOne>());
+        Node<double, double> fifth(std::make_unique<HalfInput>());
+        Node<double, int>    sixth(std::make_unique<ToInteger>());
 
-    MultiCompositeNode<bool, int, double> composite(std::make_unique<BoolIntAggregator>());
-    Node<double, double> output(std::make_unique<PrintProcessor>());
+        // Define ports
+        start.addInput<double>("in");
+        start.addOutput<double>("out");
 
-    b1.connectToObjectSink<bool>(&composite);
-    b2.connectToObjectSink<bool>(&composite);
-    i1.connectToObjectSink<int>(&composite);
-    i2.connectToObjectSink<int>(&composite);
-    composite.connect(&output);
+        second.addInput<double>("in");
+        second.addOutput<double>("out");
 
-    std::cout << "[Main] Feeding 2 bools and 2 ints\n";
-    b1.consume(true);
-    i1.consume(10);
-    b2.consume(false);
-    i2.consume(14); // triggers processing
+        third.addInput<double>("in");
+        third.addOutput<double>("out");
 
-    // std::cout << "\n[Main] Feeding 2 bools and 2 ints again\n";
-    // b1.consume(true);
-    // i1.consume(20);
-    // b2.consume(true);
-    // i2.consume(12); // triggers processing
+        fourth.addInput<double>("in");
+        fourth.addOutput<double>("out");
+
+        fifth.addInput<double>("in");
+        fifth.addOutput<double>("out");
+
+        sixth.addInput<double>("in");
+        sixth.addOutput<int>("out");
+
+        // Connect the pipeline
+        start.connectOutputTo<double>("out", second, "in");
+        second.connectOutputTo<double>("out", third, "in");
+        third.connectOutputTo<double>("out", fourth, "in");
+        fourth.connectOutputTo<double>("out", fifth, "in");
+        fifth.connectOutputTo<double>("out", sixth, "in");
+
+        // Feed initial value
+        start.feedInput<double>("in", 1.0);
+
+        // Read final output
+        int result = sixth.getOutputValue<int>("out");
+        std::cout << "Final result: " << result << std::endl; // Should print 3
+
+        std::cout << std::endl;
+
+        // === Second test: conditional double based on bool ===
+        Node<std::tuple<bool, int>, int> logicNode(std::make_unique<ConditionalDouble>());
+        logicNode.addInput<bool>("flag");    // instead of "flag"
+        logicNode.addInput<int>("number");     // instead of "number"
+        logicNode.addOutput<int>("out");
+
+        // Feed inputs
+        logicNode.feedInput<int>("number", 7);
+        logicNode.feedInput<bool>("flag", false);
+
+        // Read result
+        int logicResult = logicNode.getOutputValue<int>("out");
+        std::cout << "Conditional logic result (should be 7): " << logicResult << std::endl;
+    }
+    catch (const std::exception& ex) {
+        std::cerr << "[EXCEPTION] " << ex.what() << std::endl;
+    }
 
     std::cout << "\nPress Enter to exit...";
     std::cin.get();

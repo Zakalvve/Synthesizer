@@ -1,5 +1,10 @@
 #include <iostream>
-#include "PipelineCore.h"
+
+#include "Node.h"
+#include "PipelinesUtils.h"
+#include "Processor.h"
+
+using namespace Audio::Processing::Pipelines;
 
 class AddOne : public Processor<double, double> {
     double process(const double& x) override { return x + 1; }

@@ -104,3 +104,4 @@ http-client.private.env.json
 .idea/ApifoxUploaderProjectSetting.xml
 
 build/
+.idea/**

@@ -1,14 +1,16 @@
 #include "PipelineSynthesizer.h"
 
+#include <utility>
+
 #include "AudioContext.h"
-#include "InstrumentConfig.h"
+#include "InstrumentFactory.h"
+#include "Instrument.h"
 
 namespace Audio::Synth {
-    PipelineSynthesizer::PipelineSynthesizer(int sampleRate, double volume,
-                                             InstrumentConfig config, bool postFx, bool useVelocity)
-        : _sampleRate(sampleRate), _volume(volume), _config(config),
-          _postFx(postFx), _useVelocity(useVelocity) {
-        _config.sampleRate = sampleRate;
+    PipelineSynthesizer::PipelineSynthesizer(int sampleRate, double volume, int instrumentIndex,
+                                             bool useVelocity, bool channelPostFx)
+        : _sampleRate(sampleRate), _volume(volume), _instrumentIndex(instrumentIndex),
+          _useVelocity(useVelocity), _channelPostFx(channelPostFx) {
     }
 
     Audio::AudioSample PipelineSynthesizer::sample() {
@@ -35,7 +37,9 @@ namespace Audio::Synth {
     void PipelineSynthesizer::processMidiEvent(Midi::MidiRollChannelOnEvent &event) {
         const int idx = event.getChannel();
         if (_channels.find(idx) == _channels.end()) {
-            _channels.emplace(idx, Channel(_config, _postFx));
+            Channel channel(Instrument(buildInstrument(_instrumentIndex, _sampleRate)), 0.0, 0.5);
+            if (_channelPostFx) channel.setPostFx(buildExamplePostFx(_sampleRate));
+            _channels.emplace(idx, std::move(channel));
         }
     }
 

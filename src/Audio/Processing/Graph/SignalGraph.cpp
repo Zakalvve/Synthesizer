@@ -20,12 +20,11 @@ namespace Audio::Processing {
     }
 
     void SignalGraph::setOutput(NodeId node, int outPort) {
-        _outputNode = node;
-        _outputPort = outPort;
+        _outputs.push_back(Terminal{node, outPort});
     }
 
     AudioPipeline SignalGraph::compile(int maxInstances, int blockSize) {
-        if (_outputNode < 0) throw std::runtime_error("SignalGraph::compile: no output node set");
+        if (_outputs.empty()) throw std::runtime_error("SignalGraph::compile: no output set");
 
         const int n = static_cast<int>(_nodes.size());
 
@@ -73,7 +72,8 @@ namespace Audio::Processing {
         p._maxInstances = maxInstances;
         p._blockSize = blockSize;
         p._instanceStateSize = totalState;
-        p._terminalSlot = outBase[_outputNode] + _outputPort;
+        p._terminalSlots.reserve(_outputs.size());
+        for (const Terminal &t: _outputs) p._terminalSlots.push_back(outBase[t.node] + t.port);
 
         p._nodes.reserve(n);
         for (const int idx: order) {

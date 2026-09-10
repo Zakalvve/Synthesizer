@@ -37,10 +37,14 @@ namespace Audio::Processing {
             bool delayed;
         };
 
+        struct Terminal {
+            NodeId node;
+            int port;
+        };
+
         std::vector<NodeSpec> _nodes;
         std::vector<Edge> _edges;
-        NodeId _outputNode = -1;
-        int _outputPort = 0;
+        std::vector<Terminal> _outputs;
     };
 }
 

@@ -20,6 +20,9 @@ namespace Audio::Processing {
 
         void resetInstance(int instanceIndex);
 
+        double terminal(int i) const;
+        int terminalCount() const { return static_cast<int>(_terminalSlots.size()); }
+
         int instanceCount() const { return _maxInstances; }
         int blockSize() const { return _blockSize; }
 
@@ -40,7 +43,7 @@ namespace Audio::Processing {
         std::size_t _instanceStateSize = 0;
         int _maxInstances = 0;
         int _blockSize = 1;
-        int _terminalSlot = -1;
+        std::vector<int> _terminalSlots;
     };
 }
 

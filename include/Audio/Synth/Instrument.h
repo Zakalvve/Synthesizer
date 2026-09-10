@@ -6,12 +6,15 @@
 
 #include "AudioContext.h"
 #include "AudioPipeline.h"
-#include "InstrumentConfig.h"
+#include "SignalGraph.h"
+#include "InstrumentFactory.h"
 
 namespace Audio::Synth {
     class Instrument {
     public:
-        explicit Instrument(const InstrumentConfig &config);
+        explicit Instrument(InstrumentSpec spec);
+
+        void setPostFx(Processing::SignalGraph postFx);
 
         void playNote(const std::string &noteKey, double frequency, double velocity, long transportSample);
 
@@ -35,13 +38,14 @@ namespace Audio::Synth {
 
         int findFreeOrOldest();
 
-        InstrumentConfig _config;
         Processing::AudioPipeline _pipeline;
         std::vector<Voice> _voices;
         long _orderCounter = 0;
         int _attackDur = 0;
         int _decayDur = 0;
         int _releaseDur = 0;
+        bool _hasPostFx = false;
+        Processing::AudioPipeline _postFx;
     };
 }
 

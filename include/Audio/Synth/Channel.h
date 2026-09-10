@@ -6,13 +6,15 @@
 #include "AudioContext.h"
 #include "AudioPipeline.h"
 #include "AudioSample.h"
+#include "SignalGraph.h"
 #include "Instrument.h"
-#include "InstrumentConfig.h"
 
 namespace Audio::Synth {
     class Channel {
     public:
-        explicit Channel(const InstrumentConfig &config, bool postFx = false);
+        Channel(Instrument instrument, double pan, double gain);
+
+        void setPostFx(Processing::SignalGraph postFx);
 
         void playNote(const std::string &noteName, double velocity, long transportSample);
 
@@ -24,10 +26,9 @@ namespace Audio::Synth {
 
     private:
         Instrument _instrument;
+        Processing::AudioPipeline _channelGraph;
         bool _hasPostFx = false;
         Processing::AudioPipeline _postFx;
-        double _volume = 0.5;
-        double _pan = 0.0;
     };
 }
 

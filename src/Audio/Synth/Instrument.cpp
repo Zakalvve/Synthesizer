@@ -2,49 +2,20 @@
 
 #include <algorithm>
 #include <limits>
-#include <memory>
-
-#include "SignalGraph.h"
-#include "OscillatorNode.h"
-#include "PhaseOscillatorNode.h"
-#include "ADSRNode.h"
-#include "VcaNode.h"
-#include "SawtoothWave.h"
+#include <utility>
 
 namespace Audio::Synth {
     using namespace Audio::Processing;
 
-    Instrument::Instrument(const InstrumentConfig &config) : _config(config) {
-        _attackDur = static_cast<int>(_config.attack * _config.sampleRate);
-        _decayDur = static_cast<int>(_config.decay * _config.sampleRate);
-        _releaseDur = static_cast<int>(_config.release * _config.sampleRate);
+    Instrument::Instrument(InstrumentSpec spec)
+        : _attackDur(spec.attackDur), _decayDur(spec.decayDur), _releaseDur(spec.releaseDur) {
+        _pipeline = spec.voiceGraph.compile(spec.maxVoices, 1);
+        _voices.resize(spec.maxVoices);
+    }
 
-        SignalGraph graph;
-        SignalGraph::NodeId osc;
-        switch (_config.oscType) {
-            case OscType::PhaseSine:
-                osc = graph.add(std::make_unique<PhaseOscillatorNode>(
-                    PhaseOscillatorNode::Wave::Sine, _config.glideTime));
-                break;
-            case OscType::PhaseSaw:
-                osc = graph.add(std::make_unique<PhaseOscillatorNode>(
-                    PhaseOscillatorNode::Wave::Saw, _config.glideTime));
-                break;
-            case OscType::LegacySaw:
-            default:
-                osc = graph.add(std::make_unique<OscillatorNode>(
-                    std::make_shared<Audio::SawtoothWave>(_config.sampleRate)));
-                break;
-        }
-        auto adsr = graph.add(std::make_unique<ADSRNode>(
-            _config.sampleRate, _config.attack, _config.decay, _config.release, _config.sustain));
-        auto vca = graph.add(std::make_unique<VcaNode>());
-        graph.connect(osc, 0, vca, 0);
-        graph.connect(adsr, 0, vca, 1);
-        graph.setOutput(vca, 0);
-
-        _pipeline = graph.compile(_config.maxVoices,  1);
-        _voices.resize(_config.maxVoices);
+    void Instrument::setPostFx(SignalGraph postFx) {
+        _postFx = postFx.compile(1, 1);
+        _hasPostFx = true;
     }
 
     int Instrument::findFreeOrOldest() {
@@ -90,7 +61,7 @@ namespace Audio::Synth {
         }
     }
 
-    double Instrument::sample(Processing::AudioContext &ctx) {
+    double Instrument::sample(AudioContext &ctx) {
         double mono = 0.0;
         for (int i = 0; i < static_cast<int>(_voices.size()); ++i) {
             Voice &v = _voices[i];
@@ -112,7 +83,12 @@ namespace Audio::Synth {
             ctx.noteSample = noteSample;
             mono += _pipeline.renderInstance(i, ctx)[0];
         }
-        return mono * _config.masterGain;
+
+        if (_hasPostFx) {
+            ctx.sourceValue = mono;
+            mono = _postFx.renderInstance(0, ctx)[0];
+        }
+        return mono;
     }
 
     bool Instrument::isActive() const {

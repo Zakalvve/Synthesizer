@@ -10,13 +10,12 @@
 
 #include "AudioSample.h"
 #include "Channel.h"
-#include "InstrumentConfig.h"
 
 namespace Audio::Synth {
     class PipelineSynthesizer : public Midi::MidiEventProcessor {
     public:
-        PipelineSynthesizer(int sampleRate, double volume,
-                            InstrumentConfig config = {}, bool postFx = false, bool useVelocity = false);
+        PipelineSynthesizer(int sampleRate, double volume, int instrumentIndex,
+                            bool useVelocity = false, bool channelPostFx = false);
 
         Audio::AudioSample sample();
 
@@ -31,9 +30,9 @@ namespace Audio::Synth {
     private:
         int _sampleRate;
         double _volume;
-        InstrumentConfig _config;
-        bool _postFx;
+        int _instrumentIndex;
         bool _useVelocity;
+        bool _channelPostFx;
         long _transportSample = 0;
         std::unordered_map<int, Channel> _channels;
     };

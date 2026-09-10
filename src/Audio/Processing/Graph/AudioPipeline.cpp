@@ -20,7 +20,11 @@ namespace Audio::Processing {
             rec.processor->process(ctx);
         }
 
-        return _scratch.data() + static_cast<std::size_t>(_terminalSlot) * _blockSize;
+        return _scratch.data() + static_cast<std::size_t>(_terminalSlots[0]) * _blockSize;
+    }
+
+    double AudioPipeline::terminal(int i) const {
+        return _scratch[static_cast<std::size_t>(_terminalSlots[i]) * _blockSize];
     }
 
     void AudioPipeline::resetInstance(int instanceIndex) {

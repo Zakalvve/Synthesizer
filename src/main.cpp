@@ -19,7 +19,6 @@
 #include "MidiRollTrack.h"
 #include "MidiRollEvent.h"
 
-#include "InstrumentConfig.h"
 #include "PipelineSynthesizer.h"
 
 using namespace std;
@@ -150,16 +149,20 @@ void renderRoll(const std::string& outputName, Audio::Synth::PipelineSynthesizer
 int main() {
     runGraphSmokeTest();
 
-    Audio::Synth::PipelineSynthesizer synth(sample_rate, 1.0);
-    renderRoll("pipeline-output.wav", synth);
+    {
+        Audio::Synth::PipelineSynthesizer synth(sample_rate, 1.0, 0);
+        renderRoll("instrument0-saw.wav", synth);
+    }
+    {
+        Audio::Synth::PipelineSynthesizer synth(sample_rate, 1.0, 1);
+        renderRoll("instrument1-sine.wav", synth);
+    }
+    {
+        Audio::Synth::PipelineSynthesizer synth(sample_rate, 1.0, 0, true, true);
+        renderRoll("instrument0-saw-postfx.wav", synth);
+    }
 
-    Audio::Synth::InstrumentConfig altered;
-    altered.sampleRate = sample_rate;
-    altered.oscType    = Audio::Synth::OscType::PhaseSine;
-    altered.glideTime  = 0.02;
-    Audio::Synth::PipelineSynthesizer alteredSynth(sample_rate, 1.0, altered,  true,  true);
-    renderRoll("altered-output.wav", alteredSynth);
-    std::cout << "[RENDER] pipeline-output.wav (default) and altered-output.wav (sine + glide + delay + low-pass + velocity)" << std::endl;
+    std::cout << "[RENDER] instrument0-saw.wav, instrument1-sine.wav, instrument0-saw-postfx.wav" << std::endl;
 
     return 0;
 }

@@ -25,3 +25,7 @@ file(GLOB_RECURSE SOURCES
 # Create the executable
 add_executable(Synthesizer ${SOURCES})
 target_link_options(Synthesizer PRIVATE "-Wl,--subsystem,console")
+
+# Statically link the GCC/MinGW runtime so the .exe is self-contained
+# (no libstdc++-6.dll / libgcc_s_seh-1.dll / libwinpthread-1.dll needed at runtime).
+target_link_options(Synthesizer PRIVATE "-static" "-static-libgcc" "-static-libstdc++")

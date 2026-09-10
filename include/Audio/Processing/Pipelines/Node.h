@@ -64,8 +64,12 @@ namespace Audio::Processing::Pipelines {
             PIPELINE_LOG("All inputs filled. Executing processor...");
             TIn in = readInputs();
             TOut out = processor->process(in);
-            writeOutputs(out);
+            // Flush inputs BEFORE writing outputs. writeOutputs fills an output
+            // port, whose consume() calls back into this node's onPortFilled();
+            // clearing the inputs first makes that re-entrant call a no-op instead
+            // of running the processor a second time.
             inputBank.flushAll();
+            writeOutputs(out);
         }
 
     private:
@@ -84,7 +88,11 @@ namespace Audio::Processing::Pipelines {
         } else if constexpr (requires { std::tuple_size<TIn>::value; }) {
             return unpackPorts<TIn>(inputBank, std::make_index_sequence<std::tuple_size<TIn>::value>{});
         } else {
-            return inputBank.template getPort<TIn>("in")->get();
+            // getPortValue reads a MultiPort via getAll() when TIn is a container
+            // (e.g. std::vector<double>), and a plain Port via get() otherwise.
+            // Using getPort<TIn> directly here would unsafely cast a MultiPort<U>
+            // to a Port<std::vector<U>> (undefined behaviour).
+            return getPortValue<TIn>(inputBank, "in");
         }
     }
 

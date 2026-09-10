@@ -6,9 +6,11 @@
 #include <string>
 #include <filesystem>
 
-#include "Node.h"
-#include "PipelinesUtils.h"
-#include "Processor.h"
+#include "Signal.h"
+#include "AudioContext.h"
+#include "SignalProcessor.h"
+#include "SignalGraph.h"
+#include "AudioPipeline.h"
 
 #include "WAVFile.h"
 #include "AudioSample.h"
@@ -16,199 +18,148 @@
 #include "MidiJsonFile.h"
 #include "MidiRollTrack.h"
 #include "MidiRollEvent.h"
-#include "Synthesizer.h"
+
+#include "InstrumentConfig.h"
+#include "PipelineSynthesizer.h"
 
 using namespace std;
-using namespace Audio::Processing::Pipelines;
+using namespace Audio::Processing;
 
 const int sample_rate = 44100;
 const int bits_per_sample = 32;
 const int max_amplitude = (1u << (bits_per_sample - 1)) - 1;
 
-class AddOne : public Processor<double, double> {
-    double process(const double& x) override { return x + 1; }
-};
 
-class MultiplyByTwo : public Processor<double, double> {
-    double process(const double& x) override { return x * 2; }
-};
-
-class MinusOne : public Processor<double, double> {
-    double process(const double& x) override { return x - 1; }
-};
-
-class HalfInput : public Processor<double, double> {
-    double process(const double& x) override { return x / 2.0; }
-};
-
-class ToInteger : public Processor<double, int> {
-    int process(const double& x) override { return static_cast<int>(x); }
-};
-
-template<typename T>
-class PassThrough : public Processor<T, T> {
-    T process(const T& x) override { return x; }
-};
-
-class ConditionalDouble : public Processor<std::tuple<bool, int>, int> {
+class ConstProcessor : public SignalProcessor {
+    double _value;
 public:
-    int process(const std::tuple<bool, int>& input) override {
-        bool condition = std::get<0>(input);
-        int value = std::get<1>(input);
-        return condition ? value * 2 : value;
+    explicit ConstProcessor(double value) : _value(value) {}
+    void process(AudioContext& ctx) const override {
+        Signal* out = ctx.output(0);
+        for (int f = 0; f < ctx.blockSize; ++f) out[f] = _value;
     }
+    int inputCount()  const override { return 0; }
+    int outputCount() const override { return 1; }
 };
 
-class AverageProcessor : public Processor<std::vector<double>, double> {
+class GainProcessor : public SignalProcessor {
+    double _gain;
 public:
-    double process(const std::vector<double>& values) override {
-        if (values.empty()) return 0.0;
-        double sum = 0.0;
-        for (double v : values) sum += v;
-        return sum / values.size();
+    explicit GainProcessor(double gain) : _gain(gain) {}
+    void process(AudioContext& ctx) const override {
+        const Signal* in = ctx.input(0);
+        Signal* out = ctx.output(0);
+        for (int f = 0; f < ctx.blockSize; ++f) out[f] = in[f] * _gain;
     }
+    int inputCount()  const override { return 1; }
+    int outputCount() const override { return 1; }
 };
 
-// === First: exercise the generic DAG/pipeline machinery ===
-void runPipelineTests() {
-    try {
-        // === First test: simple pipeline arithmatic ===
-        Node<double, double> start(std::make_unique<AddOne>());
-        Node<double, double> second(std::make_unique<MultiplyByTwo>());
-        Node<double, double> third(std::make_unique<MultiplyByTwo>());
-        Node<double, double> fourth(std::make_unique<MinusOne>());
-        Node<double, double> fifth(std::make_unique<HalfInput>());
-        Node<double, int>    sixth(std::make_unique<ToInteger>());
-
-        // Define ports
-        start.addInput<double>("in");
-        start.addOutput<double>("out");
-
-        second.addInput<double>("in");
-        second.addOutput<double>("out");
-
-        third.addInput<double>("in");
-        third.addOutput<double>("out");
-
-        fourth.addInput<double>("in");
-        fourth.addOutput<double>("out");
-
-        fifth.addInput<double>("in");
-        fifth.addOutput<double>("out");
-
-        sixth.addInput<double>("in");
-        sixth.addOutput<int>("out");
-
-        // Connect the pipeline
-        start.connectOutputTo<double>("out", second, "in");
-        second.connectOutputTo<double>("out", third, "in");
-        third.connectOutputTo<double>("out", fourth, "in");
-        fourth.connectOutputTo<double>("out", fifth, "in");
-        fifth.connectOutputTo<double>("out", sixth, "in");
-
-        // Feed initial value
-        start.feedInput<double>("in", 1.0);
-
-        // Read final output
-        int result = sixth.getOutputValue<int>("out");
-        std::cout << "Final result: " << result << std::endl; // Should print 3
-
-        std::cout << std::endl;
-
-        // === Second test: conditional double based on bool ===
-        Node<std::tuple<bool, int>, int> logicNode(std::make_unique<ConditionalDouble>());
-        logicNode.addInput<bool>("flag");    // instead of "flag"
-        logicNode.addInput<int>("number");     // instead of "number"
-        logicNode.addOutput<int>("out");
-
-        // Feed inputs
-        logicNode.feedInput<int>("number", 7);
-        logicNode.feedInput<bool>("flag", false);
-
-        // Read result
-        int logicResult = logicNode.getOutputValue<int>("out");
-        std::cout << "Conditional logic result (should be 7): " << logicResult << std::endl;
-
-        // === Third test: multi input functionality ===
-        Node<std::vector<double>, double> avgNode(std::make_unique<AverageProcessor>());
-        avgNode.inputs().addMultiPort<double>("in");
-        avgNode.addOutput<double>("out");
-
-        // Create 3 input nodes
-        Node<double, double> input1(nullptr);
-        input1.addOutput<double>("out");
-
-        Node<double, double> input2(nullptr);
-        input2.addOutput<double>("out");
-
-        Node<double, double> input3(nullptr);
-        input3.addOutput<double>("out");
-
-        // Connect each output to the avgNode multiport input
-        auto* multiPort = avgNode.inputs().getMultiPort<double>("in");
-        input1.outputs().getPort<double>("out")->connect(multiPort);
-        multiPort->registerInput();
-
-        input2.outputs().getPort<double>("out")->connect(multiPort);
-        multiPort->registerInput();
-
-        input3.outputs().getPort<double>("out")->connect(multiPort);
-        multiPort->registerInput();
-
-        // Feed inputs
-        input1.outputs().getPort<double>("out")->consume(4.0);
-        input2.outputs().getPort<double>("out")->consume(8.0);
-        input3.outputs().getPort<double>("out")->consume(6.0);
-
-        // Read and print result
-        double result2 = avgNode.getOutputValue<double>("out");
-        std::cout << "Average result (should be 6): " << result2 << std::endl;
-
+class SumProcessor : public SignalProcessor {
+    int _inputs;
+public:
+    explicit SumProcessor(int inputs) : _inputs(inputs) {}
+    void process(AudioContext& ctx) const override {
+        Signal* out = ctx.output(0);
+        for (int f = 0; f < ctx.blockSize; ++f) {
+            double sum = 0.0;
+            for (int i = 0; i < _inputs; ++i) sum += ctx.input(i)[f];
+            out[f] = sum;
+        }
     }
-    catch (const std::exception& ex) {
-        std::cerr << "[EXCEPTION] " << ex.what() << std::endl;
+    int inputCount()  const override { return _inputs; }
+    int outputCount() const override { return 1; }
+};
+
+class CounterProcessor : public SignalProcessor {
+public:
+    void process(AudioContext& ctx) const override {
+        double* st = ctx.state();
+        Signal* out = ctx.output(0);
+        for (int f = 0; f < ctx.blockSize; ++f) out[f] = st[0]++;
     }
+    int inputCount()  const override { return 0; }
+    int outputCount() const override { return 1; }
+    std::size_t stateSize() const override { return 1; }
+    void resetState(double* st) const override { st[0] = 0.0; }
+};
+
+void runGraphSmokeTest() {
+    SignalGraph graph;
+    auto c2    = graph.add(std::make_unique<ConstProcessor>(2.0));
+    auto gain  = graph.add(std::make_unique<GainProcessor>(3.0));
+    auto c10   = graph.add(std::make_unique<ConstProcessor>(10.0));
+    auto count = graph.add(std::make_unique<CounterProcessor>());
+    auto sum   = graph.add(std::make_unique<SumProcessor>(3));
+
+    graph.connect(c2,   0, gain, 0);
+    graph.connect(gain, 0, sum,  0);
+    graph.connect(c10,  0, sum,  1);
+    graph.connect(count,0, sum,  2);
+    graph.setOutput(sum, 0);
+
+    AudioPipeline pipeline = graph.compile( 2,  1);
+
+    AudioContext ctx;
+    const double i0a = pipeline.renderInstance(0, ctx)[0];
+    const double i0b = pipeline.renderInstance(0, ctx)[0];
+    const double i1a = pipeline.renderInstance(1, ctx)[0];
+    const double i0c = pipeline.renderInstance(0, ctx)[0];
+    const double i1b = pipeline.renderInstance(1, ctx)[0];
+
+    bool pass = true;
+    auto check = [&](const char* label, double got, double want) {
+        const bool ok = (got == want);
+        pass = pass && ok;
+        std::cout << "  [" << (ok ? "ok" : "XX") << "] " << label
+                  << " = " << got << " (want " << want << ")\n";
+    };
+    std::cout << "[SMOKE TEST] audio graph core\n";
+    check("chain + fan-in, instance0 #1", i0a, 16);
+    check("state persists,  instance0 #2", i0b, 17);
+    check("instance isolated, instance1 #1", i1a, 16);
+    check("state persists,  instance0 #3", i0c, 18);
+    check("instance isolated, instance1 #2", i1b, 17);
+    std::cout << "[SMOKE TEST] " << (pass ? "PASS" : "FAIL") << std::endl;
 }
 
-// === Second: synthesize a midi-roll to a WAV file (current procedural path) ===
-void synthesizeMidiRoll() {
+void renderRoll(const std::string& outputName, Audio::Synth::PipelineSynthesizer& synth) {
     std::string filePath = "../data/moonlight-sonata.json";
     Audio::Midi::MidiJsonFile mj;
+    if (!mj.load(filePath.c_str(), sample_rate)) return;
 
-    if (mj.load(filePath.c_str(), sample_rate)) {
-        Audio::Midi::MidiRoll& roll = *(mj.getRoll());
-        Audio::WAVFile wav(true, sample_rate, bits_per_sample, max_amplitude);
+    Audio::Midi::MidiRoll& roll = *(mj.getRoll());
+    Audio::WAVFile wav(true, sample_rate, bits_per_sample, max_amplitude);
+    wav.open(outputName);
 
-        Audio::Synthesizer synth(sample_rate, 1.0);
+    int t = 0;
+    while (roll.isRolling() || synth.isPlaying()) {
+        std::vector<std::unique_ptr<Audio::Midi::MidiRollEvent>> midiEvents = roll.tickRoll(t);
+        for (auto& event : midiEvents) event->process(synth);
 
-        wav.open("new-test-output.wav");
+        Audio::AudioSample stereoSample = synth.sample();
+        Audio::AudioSample normalizedSample = stereoSample * (static_cast<double>(max_amplitude) * 1);
+        Audio::AudioSample clampedSample = normalizedSample.clamp(-max_amplitude, max_amplitude);
 
-        int t = 0;
-
-        while(roll.isRolling() || synth.isPlaying()) {
-
-            std::vector<std::unique_ptr<Audio::Midi::MidiRollEvent>> midiEvents = roll.tickRoll(t);
-
-            for(auto& event: midiEvents){
-                // Uses a visitor pattern
-                event->process(synth);
-            }
-
-            Audio::AudioSample steroSample = synth.sample();
-            Audio::AudioSample normalizedSample = steroSample * (static_cast<double>(max_amplitude) * 1);
-            Audio::AudioSample clampedSample = normalizedSample.clamp(-max_amplitude, max_amplitude);
-
-            wav.sample(clampedSample);
-
-            ++t;
-        }
-
-        wav.close();
+        wav.sample(clampedSample);
+        ++t;
     }
+    wav.close();
 }
 
 int main() {
-    runPipelineTests();
-    synthesizeMidiRoll();
+    runGraphSmokeTest();
+
+    Audio::Synth::PipelineSynthesizer synth(sample_rate, 1.0);
+    renderRoll("pipeline-output.wav", synth);
+
+    Audio::Synth::InstrumentConfig altered;
+    altered.sampleRate = sample_rate;
+    altered.oscType    = Audio::Synth::OscType::PhaseSine;
+    altered.glideTime  = 0.02;
+    Audio::Synth::PipelineSynthesizer alteredSynth(sample_rate, 1.0, altered,  true,  true);
+    renderRoll("altered-output.wav", alteredSynth);
+    std::cout << "[RENDER] pipeline-output.wav (default) and altered-output.wav (sine + glide + delay + low-pass + velocity)" << std::endl;
+
     return 0;
 }

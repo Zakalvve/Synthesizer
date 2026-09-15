@@ -1,9 +1,12 @@
 #include "AudioEngine.h"
 
 #include <stdexcept>
+#include <vector>
 
 #include "AudioContext.h"
 #include "EngineCompiler.h"
+#include "MidiFileSource.h"
+#include "WAVFile.h"
 
 namespace Audio::Synth {
     using namespace Audio::Processing;
@@ -50,12 +53,31 @@ namespace Audio::Synth {
 
     void AudioEngine::stop() { _transport.playing = false; }
 
+    void AudioEngine::rewind() {
+        _transport.samplePosition = 0;
+        _router.reset();
+    }
+
     bool AudioEngine::isPlaying() const { return _transport.playing; }
 
     bool AudioEngine::isSounding() const {
         for (const auto &ch: _channels)
             if (ch && ch->active() && ch->isActive()) return true;
         return false;
+    }
+
+    bool AudioEngine::isFinished() const {
+        return _router.exhausted() && !isSounding();
+    }
+
+    SourceId AudioEngine::addMidiFile(const std::string &path) {
+        auto source = MidiFileSource::load(path, _sampleRate);
+        if (!source) return InvalidSource;
+        return _router.addSource(std::move(source));
+    }
+
+    void AudioEngine::assignClip(SourceId sourceId, int sourceChannel, Handle channelHandle, long offset) {
+        _router.addClip(sourceId, sourceChannel, channelHandle, offset);
     }
 
     bool AudioEngine::anySoloed() const {
@@ -82,7 +104,22 @@ namespace Audio::Synth {
     Audio::AudioSample AudioEngine::sample() {
         AudioContext ctx;
         ctx.sampleRate = _sampleRate;
-        ctx.transportSample = _transport.samplePosition;
+        const long pos = _transport.samplePosition;
+        ctx.transportSample = pos;
+
+        if (_transport.playing) {
+            _router.pump(pos, pos + 1, [this, pos](Handle h, const MidiEvent &ev) {
+                auto it = _channelByHandle.find(h);
+                if (it == _channelByHandle.end()) return;
+                Channel *ch = it->second;
+                if (ev.kind == MidiEvent::Kind::NoteOn) {
+                    const double velocity = ch->synth().velocitySensitivity() ? (ev.velocity / 127.0) : 1.0;
+                    ch->playNote(ev.note, velocity, pos);
+                } else {
+                    ch->releaseNote(ev.note);
+                }
+            });
+        }
 
         _masterAccum = Audio::AudioSample(0.0, 0.0);
         for (std::size_t i = 0; i < _busAccum.size(); ++i) {
@@ -124,6 +161,43 @@ namespace Audio::Synth {
 
         if (_transport.playing) ++_transport.samplePosition;
         return total;
+    }
+
+    int AudioEngine::render(Audio::AudioSample *out, int frames) {
+        int i = 0;
+        for (; i < frames; ++i) {
+            if (isFinished()) break;
+            out[i] = sample();
+        }
+        return i;
+    }
+
+    bool AudioEngine::save(const std::string &path) {
+        if (path.size() < 4 || path.compare(path.size() - 4, 4, ".wav") != 0) return false;
+
+        const int bits = 32;
+        const int maxAmplitude = (1u << (bits - 1)) - 1;
+
+        rewind();
+        play();
+
+        Audio::WAVFile wav(true, _sampleRate, bits, maxAmplitude);
+        wav.open(path);
+
+        std::vector<Audio::AudioSample> buffer(4096, Audio::AudioSample(0.0, 0.0));
+        while (!isFinished()) {
+            const int n = render(buffer.data(), static_cast<int>(buffer.size()));
+            if (n == 0) break;
+            for (int i = 0; i < n; ++i) {
+                Audio::AudioSample normalized = buffer[i] * static_cast<double>(maxAmplitude);
+                Audio::AudioSample clamped = normalized.clamp(-maxAmplitude, maxAmplitude);
+                wav.sample(clamped);
+            }
+        }
+
+        wav.close();
+        stop();
+        return true;
     }
 
     void AudioEngine::processMidiEvent(Midi::MidiRollEvent &) { }

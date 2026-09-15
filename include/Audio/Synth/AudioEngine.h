@@ -19,6 +19,7 @@
 #include "Channel.h"
 #include "Bus.h"
 #include "NodeParamTarget.h"
+#include "MidiRouter.h"
 
 namespace Audio::Synth {
     class EngineCompiler;
@@ -45,11 +46,25 @@ namespace Audio::Synth {
 
         void stop();
 
+        void rewind();
+
         bool isPlaying() const;
 
         bool isSounding() const;
 
+        bool isFinished() const;
+
+        SourceId addMidiFile(const std::string &path);
+
+        MidiRouter &midiRouter() { return _router; }
+
+        void assignClip(SourceId sourceId, int sourceChannel, Handle channelHandle, long offset = 0);
+
         Audio::AudioSample sample();
+
+        int render(Audio::AudioSample *out, int frames);
+
+        bool save(const std::string &path);
 
         void processMidiEvent(Midi::MidiRollEvent &event) override;
 
@@ -74,6 +89,9 @@ namespace Audio::Synth {
         std::vector<std::unique_ptr<Bus> > _buses;
         std::vector<int> _busOrder;
         std::vector<std::unique_ptr<NodeParamTarget> > _nodeTargets;
+
+        MidiRouter _router;
+        std::unordered_map<Handle, Channel *> _channelByHandle;
 
         std::unordered_map<std::string, Handle> _names;
         std::unordered_map<Handle, ParamTarget *> _targets;

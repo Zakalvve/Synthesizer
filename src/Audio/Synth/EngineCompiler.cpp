@@ -37,6 +37,9 @@ namespace Audio::Synth {
         e._targets.clear();
         e._handleToName.clear();
         e._midiToChannel.clear();
+        e._channelByHandle.clear();
+        // NOTE: _router (MIDI sources/clips/rolls) is intentionally NOT cleared — routing is set up
+        // via the facade and survives recompiles (handles are stable).
 
         auto registerTarget = [&](const std::string &name, ParamTarget *t) -> Handle {
             Handle h;
@@ -134,7 +137,8 @@ namespace Audio::Synth {
                                   sd.attack, sd.decay, sd.sustain, sd.release,
                                   sd.velocitySensitivity, env);
 
-            registerTarget(cd.name, ch);
+            const Handle channelHandle = registerTarget(cd.name, ch);
+            e._channelByHandle[channelHandle] = ch;
             registerTarget(sd.name, &ch->synth());
             for (auto &n: vg.nodes) registerNode(n.first, n.second);
 

@@ -228,55 +228,107 @@ void runFacadeTests() {
     std::cout << "[FACADE TEST] " << (pass ? "PASS" : "FAIL") << std::endl;
 }
 
-void renderRoll(const std::string& outputName, Audio::Synth::AudioEngine& engine) {
-    std::string filePath = "../data/moonlight-sonata.json";
-    Audio::Midi::MidiJsonFile mj;
-    if (!mj.load(filePath.c_str(), sample_rate)) return;
-
-    Audio::Midi::MidiRoll& roll = *(mj.getRoll());
-    Audio::WAVFile wav(true, sample_rate, bits_per_sample, max_amplitude);
-    wav.open(outputName);
-
+static double midiEnergy(Audio::Synth::AudioEngine& engine, int frames) {
+    engine.rewind();
     engine.play();
+    std::vector<Audio::AudioSample> buf(frames, Audio::AudioSample(0.0, 0.0));
+    const int n = engine.render(buf.data(), frames);
+    double acc = 0.0;
+    for (int i = 0; i < n; ++i) acc += std::abs(buf[i].c1);
+    engine.stop();
+    return acc;
+}
 
-    int t = 0;
-    while (roll.isRolling() || engine.isSounding()) {
-        std::vector<std::unique_ptr<Audio::Midi::MidiRollEvent>> midiEvents = roll.tickRoll(t);
-        for (auto& event : midiEvents) event->process(engine);
+void runMidiRouterTests() {
+    using namespace Audio::Synth;
 
-        Audio::AudioSample stereoSample = engine.sample();
-        Audio::AudioSample normalizedSample = stereoSample * (static_cast<double>(max_amplitude) * 1);
-        Audio::AudioSample clampedSample = normalizedSample.clamp(-max_amplitude, max_amplitude);
+    bool pass = true;
+    auto check = [&](const char* label, bool ok) {
+        pass = pass && ok;
+        std::cout << "  [" << (ok ? "ok" : "XX") << "] " << label << "\n";
+    };
 
-        wav.sample(clampedSample);
-        ++t;
+    std::cout << "[MIDI TEST] router + sources\n";
+
+    const std::string midi = "../data/moonlight-sonata.json";
+
+    // save() contract
+    {
+        AudioEngine e(parseEngineDef(buildExampleEngineJson(0, false, false, sample_rate)));
+        check("save() rejects non-.wav path", e.save("nope.mp3") == false);
+        check("save() accepts .wav path", e.save("../output/_miditest.wav") == true);
     }
-    wav.close();
+
+    // A clip offset delays the source's events.
+    {
+        AudioEngine a(parseEngineDef(buildExampleEngineJson(0, false, false, sample_rate)));
+        const SourceId sa = a.addMidiFile(midi);
+        a.midiRouter().addClip(sa, 0, a.handle("channel0"), 0);
+        const double e0 = midiEnergy(a, sample_rate);
+
+        AudioEngine b(parseEngineDef(buildExampleEngineJson(0, false, false, sample_rate)));
+        const SourceId sb = b.addMidiFile(midi);
+        b.midiRouter().addClip(sb, 0, b.handle("channel0"), 2L * sample_rate);  // +2s
+        const double eDelayed = midiEnergy(b, sample_rate);
+
+        check("midi file loads", sa != InvalidSource && sb != InvalidSource);
+        check("offset 0 sounds in first second", e0 > 0.0);
+        check("offset +2s is silent in first second", eDelayed == 0.0);
+    }
+
+    // A clip on a channel the source doesn't contain produces nothing.
+    {
+        AudioEngine e(parseEngineDef(buildExampleEngineJson(0, false, false, sample_rate)));
+        const SourceId s = e.addMidiFile(midi);
+        e.midiRouter().addClip(s, 5, e.handle("channel0"), 0);  // file has no channel 5
+        check("empty source channel is silent", midiEnergy(e, sample_rate) == 0.0);
+    }
+
+    // Routing survives a (stopped) recompile.
+    {
+        AudioEngine e(parseEngineDef(buildExampleEngineJson(0, false, false, sample_rate)));
+        const SourceId s = e.addMidiFile(midi);
+        const Handle hc = e.handle("channel0");
+        e.midiRouter().addClip(s, 0, hc, 0);
+        e.stop();
+        e.compile(parseEngineDef(buildExampleEngineJson(0, true, true, sample_rate)));  // structural change
+        check("channel handle stable after recompile", e.handle("channel0") == hc);
+        check("routing still plays after recompile", midiEnergy(e, sample_rate) > 0.0);
+    }
+
+    std::cout << "[MIDI TEST] " << (pass ? "PASS" : "FAIL") << std::endl;
+}
+
+void renderConfig(Audio::Synth::AudioEngine& engine, const std::string& outputName) {
+    Audio::Synth::SourceId src = engine.addMidiFile("../data/moonlight-sonata.json");
+    engine.midiRouter().addClip(src, 0, engine.handle("channel0"), 0);
+    engine.save("../output/" + outputName);
 }
 
 int main() {
     runGraphSmokeTest();
     runFacadeTests();
+    runMidiRouterTests();
 
     {
         Audio::Synth::AudioEngine engine(Audio::Synth::parseEngineDef(
             Audio::Synth::buildExampleEngineJson(0, false, false, sample_rate)));
-        renderRoll("synth0-saw.wav", engine);
+        renderConfig(engine, "synth0-saw.wav");
     }
     {
         Audio::Synth::AudioEngine engine(Audio::Synth::parseEngineDef(
             Audio::Synth::buildExampleEngineJson(1, false, false, sample_rate)));
-        renderRoll("synth1-sine.wav", engine);
+        renderConfig(engine, "synth1-sine.wav");
     }
     {
         Audio::Synth::AudioEngine engine(Audio::Synth::parseEngineDef(
             Audio::Synth::buildExampleEngineJson(0, true, true, sample_rate)));
-        renderRoll("synth0-saw-postfx.wav", engine);
+        renderConfig(engine, "synth0-saw-postfx.wav");
     }
     {
         Audio::Synth::AudioEngine engine(Audio::Synth::parseEngineDef(
             Audio::Synth::buildSendDemoEngineJson(sample_rate)));
-        renderRoll("synth0-saw-send.wav", engine);
+        renderConfig(engine, "synth0-saw-send.wav");
     }
 
     std::cout << "[RENDER] synth0-saw.wav, synth1-sine.wav, synth0-saw-postfx.wav, synth0-saw-send.wav" << std::endl;

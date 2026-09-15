@@ -20,6 +20,7 @@ namespace Audio {
                 void setEvent(MidiRollTrack& track);
                 bool isRolling();
                 const std::vector<std::unique_ptr<MidiRollTrack>>& getTracks() const { return tracks; }
+                std::vector<std::unique_ptr<MidiRollTrack>>& getTracks() { return tracks; }
             private:
                 const int MICROSECONDS_PER_SECOND = 1000000;
                 int sampleRate;

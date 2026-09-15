@@ -10,11 +10,10 @@
 namespace Audio::Processing {
     class ADSRNode : public SignalProcessor {
     public:
-        ADSRNode(int sampleRate, double attackSec, double decaySec, double releaseSec, double sustainLevel) {
-            _attack_duration = static_cast<int>(attackSec * sampleRate);
-            _decay_duration = static_cast<int>(decaySec * sampleRate);
-            _release_duration = static_cast<int>(releaseSec * sampleRate);
-            _sustain_threshold = clamp(sustainLevel, 0.0, 1.0);
+        ADSRNode(int sampleRate, double attackSec, double decaySec, double releaseSec, double sustainLevel)
+            : _sampleRate(sampleRate), _attackSec(attackSec), _decaySec(decaySec),
+              _releaseSec(releaseSec), _sustainLevel(sustainLevel) {
+            rederive();
         }
 
         void process(AudioContext &ctx) const override {
@@ -31,7 +30,37 @@ namespace Audio::Processing {
         std::size_t stateSize() const override { return 1; }
         void resetState(double *st) const override { st[0] = 0.0; }
 
+        void setParam(const std::string &name, const ParamValue &v) override {
+            if (name == "attack") _attackSec = v.asDouble();
+            else if (name == "decay") _decaySec = v.asDouble();
+            else if (name == "release") _releaseSec = v.asDouble();
+            else if (name == "sustain") _sustainLevel = v.asDouble();
+            else return;
+            rederive();
+        }
+
+        ParamValue getParam(const std::string &name) const override {
+            if (name == "attack") return _attackSec;
+            if (name == "decay") return _decaySec;
+            if (name == "release") return _releaseSec;
+            if (name == "sustain") return _sustainLevel;
+            return ParamValue{};
+        }
+
     private:
+        void rederive() {
+            _attack_duration = static_cast<int>(_attackSec * _sampleRate);
+            _decay_duration = static_cast<int>(_decaySec * _sampleRate);
+            _release_duration = static_cast<int>(_releaseSec * _sampleRate);
+            _sustain_threshold = clamp(_sustainLevel, 0.0, 1.0);
+        }
+
+        int _sampleRate = 44100;
+        double _attackSec = 0.0;
+        double _decaySec = 0.0;
+        double _releaseSec = 0.0;
+        double _sustainLevel = 0.0;
+
         int _attack_duration = 0;
         int _decay_duration = 0;
         int _release_duration = 0;

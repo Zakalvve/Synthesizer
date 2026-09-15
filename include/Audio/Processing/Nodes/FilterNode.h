@@ -30,6 +30,22 @@ namespace Audio::Processing {
         int outputCount() const override { return 1; }
         std::size_t stateSize() const override { return 1; }
 
+        void setParam(const std::string &name, const ParamValue &v) override {
+            if (name == "cutoff") _cutoff = v.asDouble();
+            else if (name == "mode") _mode = parseMode(v.asString());
+        }
+
+        ParamValue getParam(const std::string &name) const override {
+            if (name == "cutoff") return _cutoff;
+            if (name == "mode") return _mode == Mode::HighPass ? "highpass" : "lowpass";
+            return ParamValue{};
+        }
+
+        static Mode parseMode(const std::string &s) {
+            if (s == "highpass") return Mode::HighPass;
+            return Mode::LowPass;
+        }
+
     private:
         double _cutoff;
         Mode _mode;

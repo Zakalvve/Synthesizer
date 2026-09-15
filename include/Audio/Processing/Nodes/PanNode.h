@@ -27,6 +27,15 @@ namespace Audio::Processing {
         int inputCount() const override { return 1; }
         int outputCount() const override { return 2; }
 
+        void setParam(const std::string &name, const ParamValue &v) override {
+            if (name == "pan") _pan = v.asDouble();
+        }
+
+        ParamValue getParam(const std::string &name) const override {
+            if (name == "pan") return _pan;
+            return ParamValue{};
+        }
+
     private:
         double _pan;
     };

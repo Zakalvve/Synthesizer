@@ -35,6 +35,24 @@ namespace Audio::Processing {
         int outputCount() const override { return 1; }
         std::size_t stateSize() const override { return static_cast<std::size_t>(_capacity) + 1; }
 
+        void setParam(const std::string &name, const ParamValue &v) override {
+            if (name == "delay") {
+                _delay = v.asInt();
+                if (_delay < 1) _delay = 1;
+                if (_delay > _capacity) _delay = _capacity;
+            } else if (name == "feedback") _feedback = v.asDouble();
+            else if (name == "wet") _wet = v.asDouble();
+            else if (name == "dry") _dry = v.asDouble();
+        }
+
+        ParamValue getParam(const std::string &name) const override {
+            if (name == "delay") return _delay;
+            if (name == "feedback") return _feedback;
+            if (name == "wet") return _wet;
+            if (name == "dry") return _dry;
+            return ParamValue{};
+        }
+
     private:
         int _capacity;
         int _delay;

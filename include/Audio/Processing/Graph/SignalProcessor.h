@@ -2,8 +2,10 @@
 #define AUDIO_PROCESSING_SIGNALPROCESSOR_H
 
 #include <cstddef>
+#include <string>
 
 #include "AudioContext.h"
+#include "ParamValue.h"
 
 namespace Audio::Processing {
     class SignalProcessor {
@@ -20,6 +22,11 @@ namespace Audio::Processing {
 
         virtual void resetState(double * ) const {
         }
+
+        virtual void setParam(const std::string &, const ParamValue &) {
+        }
+
+        virtual ParamValue getParam(const std::string &) const { return ParamValue{}; }
     };
 }
 

@@ -1,33 +1,23 @@
 #include "Channel.h"
 
-#include <memory>
+#include <cmath>
 #include <utility>
 
 #include "Pitch.h"
-#include "SignalGraph.h"
-#include "InputNode.h"
-#include "GainNode.h"
-#include "PanNode.h"
 
 namespace Audio::Synth {
     using namespace Audio::Processing;
 
-    Channel::Channel(PolyphonicSynthesizer synth, double pan, double gain) : _synth(std::move(synth)) {
-        SignalGraph graph;
-        auto in = graph.add(std::make_unique<InputNode>());
-        auto gainNode = graph.add(std::make_unique<GainNode>(gain));
-        auto panNode = graph.add(std::make_unique<PanNode>(pan));
-
-        graph.connect(in, 0, gainNode, 0);
-        graph.connect(gainNode, 0, panNode, 0);
-        graph.setOutput(panNode, 0);
-        graph.setOutput(panNode, 1);
-
-        _channelGraph = graph.compile(1, 1);
+    void Channel::configure(int midiChannel, double gain, double pan, bool mute, bool solo) {
+        _midiChannel = midiChannel;
+        _gain = gain;
+        _pan = pan;
+        _mute = mute;
+        _solo = solo;
     }
 
-    void Channel::setPostFx(SignalGraph postFx) {
-        _postFx = postFx.compile(1, 1);
+    void Channel::setPostFx(AudioPipeline postFx) {
+        _postFx = std::move(postFx);
         _hasPostFx = true;
     }
 
@@ -39,7 +29,7 @@ namespace Audio::Synth {
         _synth.releaseNote(noteName);
     }
 
-    Audio::AudioSample Channel::sample(Processing::AudioContext &ctx) {
+    double Channel::renderMono(AudioContext &ctx) {
         double mono = _synth.sample(ctx);
 
         if (_hasPostFx) {
@@ -47,13 +37,31 @@ namespace Audio::Synth {
             mono = _postFx.renderInstance(0, ctx)[0];
         }
 
-        ctx.sourceValue = mono;
-        _channelGraph.renderInstance(0, ctx);
+        return mono;
+    }
 
-        return Audio::AudioSample(_channelGraph.terminal(0), _channelGraph.terminal(1));
+    Audio::AudioSample Channel::applyGainPan(double mono) const {
+        const double g = mono * _gain;
+        const double panMapped = ((_pan + 1.0) / 2.0) * (M_PI / 2.0);
+        return Audio::AudioSample(g * std::sin(panMapped), g * std::cos(panMapped));
     }
 
     bool Channel::isActive() {
         return _synth.isActive();
+    }
+
+    void Channel::setParam(const std::string &path, const ParamValue &value) {
+        if (path == "gain") _gain = value.asDouble();
+        else if (path == "pan") _pan = value.asDouble();
+        else if (path == "mute") _mute = value.asBool();
+        else if (path == "solo") _solo = value.asBool();
+    }
+
+    ParamValue Channel::getParam(const std::string &path) const {
+        if (path == "gain") return _gain;
+        if (path == "pan") return _pan;
+        if (path == "mute") return _mute;
+        if (path == "solo") return _solo;
+        return ParamValue{};
     }
 }

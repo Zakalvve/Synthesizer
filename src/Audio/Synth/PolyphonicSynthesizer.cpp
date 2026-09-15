@@ -7,14 +7,23 @@
 namespace Audio::Synth {
     using namespace Audio::Processing;
 
-    PolyphonicSynthesizer::PolyphonicSynthesizer(SynthSpec spec) : _attackDur(spec.attackDur), _decayDur(spec.decayDur), _releaseDur(spec.releaseDur) {
-        _pipeline = spec.voiceGraph.compile(spec.maxVoices, 1);
-        _voices.resize(spec.maxVoices);
-    }
-
-    void PolyphonicSynthesizer::setPostFx(SignalGraph postFx) {
-        _postFx = postFx.compile(1, 1);
-        _hasPostFx = true;
+    void PolyphonicSynthesizer::configure(AudioPipeline voicePipeline, int maxVoices, int sampleRate,
+                                          double attackSec, double decaySec, double sustainLevel, double releaseSec,
+                                          bool velocitySensitivity, SignalProcessor *envelopeNode) {
+        _pipeline = std::move(voicePipeline);
+        _voices.assign(static_cast<std::size_t>(maxVoices), Voice{});
+        _orderCounter = 0;
+        _sampleRate = sampleRate;
+        _attackSec = attackSec;
+        _decaySec = decaySec;
+        _sustainLevel = sustainLevel;
+        _releaseSec = releaseSec;
+        _attackDur = static_cast<int>(attackSec * sampleRate);
+        _decayDur = static_cast<int>(decaySec * sampleRate);
+        _releaseDur = static_cast<int>(releaseSec * sampleRate);
+        _velocitySensitivity = velocitySensitivity;
+        _envelopeNode = envelopeNode;
+        _configured = true;
     }
 
     int PolyphonicSynthesizer::findFreeOrOldest() {
@@ -87,16 +96,41 @@ namespace Audio::Synth {
             ctx.noteSample = noteSample;
             mono += _pipeline.renderInstance(i, ctx)[0];
         }
-
-        if (_hasPostFx) {
-            ctx.sourceValue = mono;
-            mono = _postFx.renderInstance(0, ctx)[0];
-        }
         return mono;
     }
 
     bool PolyphonicSynthesizer::isActive() const {
         for (const Voice &v: _voices) if (v.inUse) return true;
         return false;
+    }
+
+    void PolyphonicSynthesizer::setParam(const std::string &path, const ParamValue &value) {
+        if (path == "attack") {
+            _attackSec = value.asDouble();
+            _attackDur = static_cast<int>(_attackSec * _sampleRate);
+            if (_envelopeNode) _envelopeNode->setParam("attack", _attackSec);
+        } else if (path == "decay") {
+            _decaySec = value.asDouble();
+            _decayDur = static_cast<int>(_decaySec * _sampleRate);
+            if (_envelopeNode) _envelopeNode->setParam("decay", _decaySec);
+        } else if (path == "release") {
+            _releaseSec = value.asDouble();
+            _releaseDur = static_cast<int>(_releaseSec * _sampleRate);
+            if (_envelopeNode) _envelopeNode->setParam("release", _releaseSec);
+        } else if (path == "sustain") {
+            _sustainLevel = value.asDouble();
+            if (_envelopeNode) _envelopeNode->setParam("sustain", _sustainLevel);
+        } else if (path == "velocitySensitivity") {
+            _velocitySensitivity = value.asBool();
+        }
+    }
+
+    ParamValue PolyphonicSynthesizer::getParam(const std::string &path) const {
+        if (path == "attack") return _attackSec;
+        if (path == "decay") return _decaySec;
+        if (path == "sustain") return _sustainLevel;
+        if (path == "release") return _releaseSec;
+        if (path == "velocitySensitivity") return _velocitySensitivity;
+        return ParamValue{};
     }
 }

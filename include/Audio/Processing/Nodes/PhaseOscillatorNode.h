@@ -38,6 +38,17 @@ namespace Audio::Processing {
         int outputCount() const override { return 1; }
         std::size_t stateSize() const override { return 2; }
 
+        void setParam(const std::string &name, const ParamValue &v) override {
+            if (name == "waveform") _wave = (v.asString() == "sine") ? Wave::Sine : Wave::Saw;
+            else if (name == "glide") _glide = v.asDouble();
+        }
+
+        ParamValue getParam(const std::string &name) const override {
+            if (name == "waveform") return _wave == Wave::Sine ? "sine" : "saw";
+            if (name == "glide") return _glide;
+            return ParamValue{};
+        }
+
     private:
         Wave _wave;
         double _glide;

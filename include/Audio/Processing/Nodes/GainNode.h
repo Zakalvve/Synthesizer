@@ -18,6 +18,15 @@ namespace Audio::Processing {
         int inputCount() const override { return 1; }
         int outputCount() const override { return 1; }
 
+        void setParam(const std::string &name, const ParamValue &v) override {
+            if (name == "gain") _gain = v.asDouble();
+        }
+
+        ParamValue getParam(const std::string &name) const override {
+            if (name == "gain") return _gain;
+            return ParamValue{};
+        }
+
     private:
         double _gain;
     };

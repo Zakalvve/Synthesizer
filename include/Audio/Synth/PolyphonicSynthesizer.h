@@ -6,23 +6,33 @@
 
 #include "AudioContext.h"
 #include "AudioPipeline.h"
-#include "SignalGraph.h"
-#include "SynthFactory.h"
+#include "SignalProcessor.h"
+#include "ParamTarget.h"
 
 namespace Audio::Synth {
-    class PolyphonicSynthesizer {
+    class PolyphonicSynthesizer : public ParamTarget {
     public:
-        explicit PolyphonicSynthesizer(SynthSpec spec);
+        PolyphonicSynthesizer() = default;
 
-        void setPostFx(Processing::SignalGraph postFx);
+        void configure(Audio::Processing::AudioPipeline voicePipeline, int maxVoices, int sampleRate,
+                       double attackSec, double decaySec, double sustainLevel, double releaseSec,
+                       bool velocitySensitivity, Audio::Processing::SignalProcessor *envelopeNode);
 
         void playNote(const std::string &noteKey, double frequency, double velocity, long transportSample);
 
         void releaseNote(const std::string &noteKey);
 
-        double sample(Processing::AudioContext &ctx);
+        double sample(Audio::Processing::AudioContext &ctx);
 
         bool isActive() const;
+
+        bool velocitySensitivity() const { return _velocitySensitivity; }
+
+        bool configured() const { return _configured; }
+
+        void setParam(const std::string &path, const ParamValue &value) override;
+
+        ParamValue getParam(const std::string &path) const override;
 
     private:
         struct Voice {
@@ -38,14 +48,20 @@ namespace Audio::Synth {
 
         int findFreeOrOldest();
 
-        Processing::AudioPipeline _pipeline;
+        Audio::Processing::AudioPipeline _pipeline;
         std::vector<Voice> _voices;
         long _orderCounter = 0;
+        int _sampleRate = 44100;
+        double _attackSec = 0.0;
+        double _decaySec = 0.0;
+        double _sustainLevel = 0.0;
+        double _releaseSec = 0.0;
         int _attackDur = 0;
         int _decayDur = 0;
         int _releaseDur = 0;
-        bool _hasPostFx = false;
-        Processing::AudioPipeline _postFx;
+        bool _velocitySensitivity = false;
+        bool _configured = false;
+        Audio::Processing::SignalProcessor *_envelopeNode = nullptr;
     };
 }
 

@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <memory>
 
-#include "MidiRoll.h"
+#include "MidiSequence.h"
 
 namespace Audio {
     namespace Midi{
@@ -14,12 +14,12 @@ namespace Audio {
                 MidiJsonFile();
                 virtual ~MidiJsonFile();
 
-                bool load(const char* filePath, int sampleRate);
-                std::unique_ptr<MidiRoll>& getRoll() { return roll; };
+                bool load(const char* filePath);
+                std::unique_ptr<MidiSequence>& getSequence() { return sequence; };
 
             private:
             const uint16_t bufferSize = 16384;
-            std::unique_ptr<MidiRoll> roll;
+            std::unique_ptr<MidiSequence> sequence;
         };
     }
 }

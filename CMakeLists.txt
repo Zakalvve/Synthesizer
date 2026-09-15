@@ -9,10 +9,13 @@ include_directories(
         include
         include/Audio
         include/Audio/Midi
-        include/Audio/Processing
-        include/Audio/Processing/Graph
-        include/Audio/Processing/Nodes
-        include/Audio/Synth
+        include/Audio/Dsp
+        include/Audio/Dsp/Graph
+        include/Audio/Dsp/Nodes
+        include/Audio/Engine
+        include/Audio/Engine/Mix
+        include/Audio/Engine/Synth
+        include/Audio/Engine/Midi
         include/Utils
         include/rapidjson
 )

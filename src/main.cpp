@@ -14,17 +14,15 @@
 
 #include "WAVFile.h"
 #include "AudioSample.h"
-#include "MidiRoll.h"
-#include "MidiJsonFile.h"
-#include "MidiRollTrack.h"
-#include "MidiRollEvent.h"
+#include "MidiChannelOnMessage.h"
+#include "MidiNoteMessage.h"
 
 #include "AudioEngine.h"
 #include "EngineDefParser.h"
 #include "ExampleEngine.h"
 
 using namespace std;
-using namespace Audio::Processing;
+using namespace Audio::Dsp;
 
 const int sample_rate = 44100;
 const int bits_per_sample = 32;
@@ -124,12 +122,12 @@ void runGraphSmokeTest() {
     std::cout << "[SMOKE TEST] " << (pass ? "PASS" : "FAIL") << std::endl;
 }
 
-static double renderEnergy(Audio::Synth::AudioEngine& engine, int samples) {
+static double renderEnergy(Audio::Engine::AudioEngine& engine, int samples) {
     engine.play();
-    Audio::Midi::MidiRollChannelOnEvent on(0, "meta", "channelOn", 0);
-    engine.processMidiEvent(on);
-    Audio::Midi::MidiRollKeyEvent key(0, "channel", "keyOn", 0, "C4", 100);
-    engine.processMidiEvent(key);
+    Audio::Midi::MidiChannelOnMessage on(0, "meta", "channelOn", 0);
+    engine.visit(on);
+    Audio::Midi::MidiNoteMessage key(0, "channel", "keyOn", 0, "C4", 100);
+    engine.visit(key);
 
     double acc = 0.0;
     for (int i = 0; i < samples; ++i) acc += std::abs(engine.sample().c1);
@@ -137,7 +135,7 @@ static double renderEnergy(Audio::Synth::AudioEngine& engine, int samples) {
 }
 
 void runFacadeTests() {
-    using namespace Audio::Synth;
+    using namespace Audio::Engine;
 
     bool pass = true;
     auto check = [&](const char* label, bool ok) {
@@ -228,7 +226,7 @@ void runFacadeTests() {
     std::cout << "[FACADE TEST] " << (pass ? "PASS" : "FAIL") << std::endl;
 }
 
-static double midiEnergy(Audio::Synth::AudioEngine& engine, int frames) {
+static double midiEnergy(Audio::Engine::AudioEngine& engine, int frames) {
     engine.rewind();
     engine.play();
     std::vector<Audio::AudioSample> buf(frames, Audio::AudioSample(0.0, 0.0));
@@ -239,8 +237,9 @@ static double midiEnergy(Audio::Synth::AudioEngine& engine, int frames) {
     return acc;
 }
 
-void runMidiRouterTests() {
-    using namespace Audio::Synth;
+void runMidiRoutingTests() {
+    using namespace Audio::Engine;
+    using namespace Audio::Engine::Midi;
 
     bool pass = true;
     auto check = [&](const char* label, bool ok) {
@@ -299,8 +298,8 @@ void runMidiRouterTests() {
     std::cout << "[MIDI TEST] " << (pass ? "PASS" : "FAIL") << std::endl;
 }
 
-void renderConfig(Audio::Synth::AudioEngine& engine, const std::string& outputName) {
-    Audio::Synth::SourceId src = engine.addMidiFile("../data/moonlight-sonata.json");
+void renderConfig(Audio::Engine::AudioEngine& engine, const std::string& outputName) {
+    Audio::Engine::Midi::SourceId src = engine.addMidiFile("../data/moonlight-sonata.json");
     engine.midiRouter().addClip(src, 0, engine.handle("channel0"), 0);
     engine.save("../output/" + outputName);
 }
@@ -308,26 +307,26 @@ void renderConfig(Audio::Synth::AudioEngine& engine, const std::string& outputNa
 int main() {
     runGraphSmokeTest();
     runFacadeTests();
-    runMidiRouterTests();
+    runMidiRoutingTests();
 
     {
-        Audio::Synth::AudioEngine engine(Audio::Synth::parseEngineDef(
-            Audio::Synth::buildExampleEngineJson(0, false, false, sample_rate)));
+        Audio::Engine::AudioEngine engine(Audio::Engine::parseEngineDef(
+            Audio::Engine::buildExampleEngineJson(0, false, false, sample_rate)));
         renderConfig(engine, "synth0-saw.wav");
     }
     {
-        Audio::Synth::AudioEngine engine(Audio::Synth::parseEngineDef(
-            Audio::Synth::buildExampleEngineJson(1, false, false, sample_rate)));
+        Audio::Engine::AudioEngine engine(Audio::Engine::parseEngineDef(
+            Audio::Engine::buildExampleEngineJson(1, false, false, sample_rate)));
         renderConfig(engine, "synth1-sine.wav");
     }
     {
-        Audio::Synth::AudioEngine engine(Audio::Synth::parseEngineDef(
-            Audio::Synth::buildExampleEngineJson(0, true, true, sample_rate)));
+        Audio::Engine::AudioEngine engine(Audio::Engine::parseEngineDef(
+            Audio::Engine::buildExampleEngineJson(0, true, true, sample_rate)));
         renderConfig(engine, "synth0-saw-postfx.wav");
     }
     {
-        Audio::Synth::AudioEngine engine(Audio::Synth::parseEngineDef(
-            Audio::Synth::buildSendDemoEngineJson(sample_rate)));
+        Audio::Engine::AudioEngine engine(Audio::Engine::parseEngineDef(
+            Audio::Engine::buildSendDemoEngineJson(sample_rate)));
         renderConfig(engine, "synth0-saw-send.wav");
     }
 

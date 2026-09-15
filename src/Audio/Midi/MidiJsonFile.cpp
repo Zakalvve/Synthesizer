@@ -8,17 +8,17 @@
 #include <queue>
 
 #include "MidiJsonFile.h"
-#include "MidiRoll.h"
-#include "MidiRollTrack.h"
-#include "MidiRollEvent.h"
-#include "MidiRollKeyEvent.h"
-#include "MidiRollChannelOnEvent.h"
+#include "MidiSequence.h"
+#include "MidiTrack.h"
+#include "MidiMessage.h"
+#include "MidiNoteMessage.h"
+#include "MidiChannelOnMessage.h"
 
 namespace Audio {
     namespace Midi {
-        MidiJsonFile::MidiJsonFile() : roll(nullptr) {};
+        MidiJsonFile::MidiJsonFile() : sequence(nullptr) {};
         MidiJsonFile::~MidiJsonFile() {};
-        bool MidiJsonFile::load(const char* filePath, int sampleRate) {
+        bool MidiJsonFile::load(const char* filePath) {
             FILE* fp = fopen(filePath, "r");
 
             if (!fp) {
@@ -65,12 +65,12 @@ namespace Audio {
             // Read tracks
             if (document.HasMember("tracks") && document["tracks"].IsArray()) {
                 const rapidjson::Value& jTracks = document["tracks"].GetArray();
-                std::vector<std::unique_ptr<MidiRollTrack>> mjTracks;
+                std::vector<std::unique_ptr<MidiTrack>> tracks;
 
                 for(rapidjson::SizeType i = 0; i < jTracks.Size(); i++){
                     const rapidjson::Value& track = jTracks[i];
                     std::string trackName = "";
-                    std::queue<std::unique_ptr<MidiRollEvent>> mjEvents;
+                    std::queue<std::unique_ptr<MidiMessage>> messages;
 
                     if (track.HasMember("trackName") && track["trackName"].IsString()){
                         trackName = track["trackName"].GetString();
@@ -102,7 +102,7 @@ namespace Audio {
                                 channel = event["channel"].GetInt();
                             }
 
-                            std::unique_ptr<MidiRollEvent> mjEvent = nullptr;
+                            std::unique_ptr<MidiMessage> message = nullptr;
 
                             if (type == "channel"){
                                 if (subType == "keyOn" || subType == "keyOff"){
@@ -116,34 +116,34 @@ namespace Audio {
                                         velocity = event["velocity"].GetInt();
                                     }
 
-                                    mjEvent = std::make_unique<MidiRollKeyEvent>(deltaTime, type, subType, channel, note, velocity);
+                                    message = std::make_unique<MidiNoteMessage>(deltaTime, type, subType, channel, note, velocity);
 
                                 }
                             } else if (type == "meta") {
                                 if (subType == "channelOn"){
-                                    mjEvent = std::make_unique<MidiRollChannelOnEvent>(deltaTime, type, subType, channel);
+                                    message = std::make_unique<MidiChannelOnMessage>(deltaTime, type, subType, channel);
                                 }
                             }
 
-                            if (mjEvent == nullptr){
-                                mjEvent = std::make_unique<MidiRollEvent>(deltaTime, type, subType, channel);
+                            if (message == nullptr){
+                                message = std::make_unique<MidiMessage>(deltaTime, type, subType, channel);
                             }
 
-                            if (mjEvent) {
-                                mjEvents.push(std::move(mjEvent));
+                            if (message) {
+                                messages.push(std::move(message));
                             }
                         }
                     }
 
-                    std::unique_ptr<MidiRollTrack> mjTrack = std::make_unique<MidiRollTrack>(trackName, std::move(mjEvents));
+                    std::unique_ptr<MidiTrack> midiTrack = std::make_unique<MidiTrack>(trackName, std::move(messages));
 
-                    mjTracks.push_back(std::move(mjTrack));
+                    tracks.push_back(std::move(midiTrack));
                 }
 
-                roll = std::make_unique<MidiRoll>(sampleRate, ticksPerQuarterNote, microsecondsPerQuarterNote, tracksCount, std::move(mjTracks));
+                sequence = std::make_unique<MidiSequence>(ticksPerQuarterNote, microsecondsPerQuarterNote, tracksCount, std::move(tracks));
             }
 
-            return roll != nullptr;
+            return sequence != nullptr;
         }
     }
 }

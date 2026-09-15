@@ -64,7 +64,7 @@ namespace Audio::Engine {
 
         int render(Audio::AudioSample *out, int frames);
 
-        bool save(const std::string &path);
+        bool exportWav(const std::string &path);
 
         void visit(Audio::Midi::MidiMessage &message) override;
 

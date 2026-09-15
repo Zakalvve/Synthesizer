@@ -251,11 +251,11 @@ void runMidiRoutingTests() {
 
     const std::string midi = "../data/moonlight-sonata.json";
 
-    // save() contract
+    // exportWav() contract
     {
         AudioEngine e(parseEngineDef(buildExampleEngineJson(0, false, false, sample_rate)));
-        check("save() rejects non-.wav path", e.save("nope.mp3") == false);
-        check("save() accepts .wav path", e.save("../output/_miditest.wav") == true);
+        check("exportWav() rejects non-.wav path", e.exportWav("nope.mp3") == false);
+        check("exportWav() accepts .wav path", e.exportWav("../output/_miditest.wav") == true);
     }
 
     // A clip offset delays the source's events.
@@ -301,7 +301,7 @@ void runMidiRoutingTests() {
 void renderConfig(Audio::Engine::AudioEngine& engine, const std::string& outputName) {
     Audio::Engine::Midi::SourceId src = engine.addMidiFile("../data/moonlight-sonata.json");
     engine.midiRouter().addClip(src, 0, engine.handle("channel0"), 0);
-    engine.save("../output/" + outputName);
+    engine.exportWav("../output/" + outputName);
 }
 
 int main() {

@@ -172,7 +172,7 @@ namespace Audio::Engine {
         return i;
     }
 
-    bool AudioEngine::save(const std::string &path) {
+    bool AudioEngine::exportWav(const std::string &path) {
         if (path.size() < 4 || path.compare(path.size() - 4, 4, ".wav") != 0) return false;
 
         const int bits = 32;

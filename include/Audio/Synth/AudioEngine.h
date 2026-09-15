@@ -1,5 +1,5 @@
-#ifndef AUDIO_SYNTH_PIPELINESYNTHESIZER_H
-#define AUDIO_SYNTH_PIPELINESYNTHESIZER_H
+#ifndef AUDIO_SYNTH_AUDIOENGINE_H
+#define AUDIO_SYNTH_AUDIOENGINE_H
 
 #include <unordered_map>
 
@@ -12,10 +12,10 @@
 #include "Channel.h"
 
 namespace Audio::Synth {
-    class PipelineSynthesizer : public Midi::MidiEventProcessor {
+    class AudioEngine : public Midi::MidiEventProcessor {
     public:
-        PipelineSynthesizer(int sampleRate, double volume, int instrumentIndex,
-                            bool useVelocity = false, bool channelPostFx = false);
+        AudioEngine(int sampleRate, double volume, int synthIndex,
+                    bool useVelocity = false, bool channelPostFx = false);
 
         Audio::AudioSample sample();
 
@@ -30,7 +30,7 @@ namespace Audio::Synth {
     private:
         int _sampleRate;
         double _volume;
-        int _instrumentIndex;
+        int _synthIndex;
         bool _useVelocity;
         bool _channelPostFx;
         long _transportSample = 0;

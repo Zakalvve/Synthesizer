@@ -1,19 +1,24 @@
-#include "PipelineSynthesizer.h"
+#include "AudioEngine.h"
 
 #include <utility>
 
 #include "AudioContext.h"
-#include "InstrumentFactory.h"
-#include "Instrument.h"
+#include "SynthFactory.h"
+#include "PolyphonicSynthesizer.h"
 
 namespace Audio::Synth {
-    PipelineSynthesizer::PipelineSynthesizer(int sampleRate, double volume, int instrumentIndex,
-                                             bool useVelocity, bool channelPostFx)
-        : _sampleRate(sampleRate), _volume(volume), _instrumentIndex(instrumentIndex),
-          _useVelocity(useVelocity), _channelPostFx(channelPostFx) {
-    }
+    AudioEngine::AudioEngine(int sampleRate,
+        double volume,
+        int synthIndex,
+        bool useVelocity,
+        bool channelPostFx
+    ) : _sampleRate(sampleRate),
+    _volume(volume),
+    _synthIndex(synthIndex),
+    _useVelocity(useVelocity),
+    _channelPostFx(channelPostFx) { }
 
-    Audio::AudioSample PipelineSynthesizer::sample() {
+    Audio::AudioSample AudioEngine::sample() {
         Processing::AudioContext ctx;
         ctx.sampleRate = _sampleRate;
         ctx.transportSample = _transportSample;
@@ -26,24 +31,23 @@ namespace Audio::Synth {
         return total;
     }
 
-    bool PipelineSynthesizer::isPlaying() {
+    bool AudioEngine::isPlaying() {
         for (auto &[idx, channel]: _channels) if (channel.isActive()) return true;
         return false;
     }
 
-    void PipelineSynthesizer::processMidiEvent(Midi::MidiRollEvent &) {
-    }
+    void AudioEngine::processMidiEvent(Midi::MidiRollEvent &) { }
 
-    void PipelineSynthesizer::processMidiEvent(Midi::MidiRollChannelOnEvent &event) {
+    void AudioEngine::processMidiEvent(Midi::MidiRollChannelOnEvent &event) {
         const int idx = event.getChannel();
         if (_channels.find(idx) == _channels.end()) {
-            Channel channel(Instrument(buildInstrument(_instrumentIndex, _sampleRate)), 0.0, 0.5);
+            Channel channel(PolyphonicSynthesizer(buildSynth(_synthIndex, _sampleRate)), 0.0, 0.5);
             if (_channelPostFx) channel.setPostFx(buildExamplePostFx(_sampleRate));
             _channels.emplace(idx, std::move(channel));
         }
     }
 
-    void PipelineSynthesizer::processMidiEvent(Midi::MidiRollKeyEvent &event) {
+    void AudioEngine::processMidiEvent(Midi::MidiRollKeyEvent &event) {
         auto it = _channels.find(event.getChannel());
         if (it == _channels.end()) return;
 

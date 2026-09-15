@@ -7,12 +7,12 @@
 #include "AudioPipeline.h"
 #include "AudioSample.h"
 #include "SignalGraph.h"
-#include "Instrument.h"
+#include "PolyphonicSynthesizer.h"
 
 namespace Audio::Synth {
     class Channel {
     public:
-        Channel(Instrument instrument, double pan, double gain);
+        Channel(PolyphonicSynthesizer synth, double pan, double gain);
 
         void setPostFx(Processing::SignalGraph postFx);
 
@@ -25,7 +25,7 @@ namespace Audio::Synth {
         bool isActive();
 
     private:
-        Instrument _instrument;
+        PolyphonicSynthesizer _synth;
         Processing::AudioPipeline _channelGraph;
         bool _hasPostFx = false;
         Processing::AudioPipeline _postFx;

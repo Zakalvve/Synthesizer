@@ -1,10 +1,10 @@
-#ifndef AUDIO_SYNTH_INSTRUMENTFACTORY_H
-#define AUDIO_SYNTH_INSTRUMENTFACTORY_H
+#ifndef AUDIO_SYNTH_SYNTHFACTORY_H
+#define AUDIO_SYNTH_SYNTHFACTORY_H
 
 #include "SignalGraph.h"
 
 namespace Audio::Synth {
-    struct InstrumentSpec {
+    struct SynthSpec {
         Processing::SignalGraph voiceGraph;
         int maxVoices = 16;
         int attackDur = 0;
@@ -12,7 +12,7 @@ namespace Audio::Synth {
         int releaseDur = 0;
     };
 
-    InstrumentSpec buildInstrument(int index, int sampleRate);
+    SynthSpec buildSynth(int index, int sampleRate);
 
     Processing::SignalGraph buildExamplePostFx(int sampleRate);
 }

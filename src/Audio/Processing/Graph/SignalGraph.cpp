@@ -30,17 +30,21 @@ namespace Audio::Processing {
 
         std::vector<int> outBase(n, 0);
         int numSlots = 0;
+
         for (int i = 0; i < n; ++i) {
             outBase[i] = numSlots;
             numSlots += _nodes[i].outCount;
         }
-        const int zeroSlot = numSlots++;
 
+        const int zeroSlot = numSlots++;
         std::vector<std::vector<int> > inSlots(n);
-        for (int i = 0; i < n; ++i) inSlots[i].assign(_nodes[i].inCount, zeroSlot);
+
+        for (int i = 0; i < n; ++i)
+            inSlots[i].assign(_nodes[i].inCount, zeroSlot);
 
         std::vector<std::vector<int> > adj(n);
         std::vector<int> indeg(n, 0);
+
         for (const Edge &e: _edges) {
             if (e.delayed) continue;
             inSlots[e.to][e.inPort] = outBase[e.from] + e.outPort;
@@ -51,18 +55,23 @@ namespace Audio::Processing {
         std::vector<int> order;
         order.reserve(n);
         std::vector<int> ready;
-        for (int i = 0; i < n; ++i) if (indeg[i] == 0) ready.push_back(i);
+
+        for (int i = 0; i < n; ++i)
+            if (indeg[i] == 0) ready.push_back(i);
+
         while (!ready.empty()) {
             const int u = ready.back();
             ready.pop_back();
             order.push_back(u);
             for (int v: adj[u]) if (--indeg[v] == 0) ready.push_back(v);
         }
+
         if (static_cast<int>(order.size()) != n)
             throw std::runtime_error("SignalGraph::compile: cycle without a delayed edge");
 
         std::vector<std::size_t> stateOffset(n, 0);
         std::size_t totalState = 0;
+
         for (int i = 0; i < n; ++i) {
             stateOffset[i] = totalState;
             totalState += _nodes[i].processor->stateSize();
@@ -73,9 +82,12 @@ namespace Audio::Processing {
         p._blockSize = blockSize;
         p._instanceStateSize = totalState;
         p._terminalSlots.reserve(_outputs.size());
-        for (const Terminal &t: _outputs) p._terminalSlots.push_back(outBase[t.node] + t.port);
+
+        for (const Terminal &t: _outputs)
+            p._terminalSlots.push_back(outBase[t.node] + t.port);
 
         p._nodes.reserve(n);
+
         for (const int idx: order) {
             AudioPipeline::NodeRec rec;
             rec.processor = _nodes[idx].processor.get();
@@ -87,10 +99,12 @@ namespace Audio::Processing {
         }
 
         p._owned.resize(n);
-        for (int i = 0; i < n; ++i) p._owned[i] = std::move(_nodes[i].processor);
+        for (int i = 0; i < n; ++i)
+            p._owned[i] = std::move(_nodes[i].processor);
 
         p._scratch.assign(static_cast<std::size_t>(numSlots) * blockSize, 0.0);
         p._stateArena.assign(static_cast<std::size_t>(maxInstances) * totalState, 0.0);
+
         return p;
     }
 }

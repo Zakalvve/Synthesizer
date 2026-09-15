@@ -1,4 +1,4 @@
-#include "InstrumentFactory.h"
+#include "SynthFactory.h"
 
 #include <memory>
 #include <utility>
@@ -15,7 +15,7 @@
 namespace Audio::Synth {
     using namespace Audio::Processing;
 
-    InstrumentSpec buildInstrument(int index, int sampleRate) {
+    SynthSpec buildSynth(int index, int sampleRate) {
         double attack;
         double decay;
         double sustain;
@@ -44,7 +44,7 @@ namespace Audio::Synth {
         graph.connect(adsr, 0, vca, 1);
         graph.setOutput(vca, 0);
 
-        InstrumentSpec spec;
+        SynthSpec spec;
         spec.maxVoices = 16;
         spec.voiceGraph = std::move(graph);
         spec.attackDur = static_cast<int>(attack * sampleRate);

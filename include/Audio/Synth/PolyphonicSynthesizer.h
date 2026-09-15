@@ -1,5 +1,5 @@
-#ifndef AUDIO_SYNTH_INSTRUMENT_H
-#define AUDIO_SYNTH_INSTRUMENT_H
+#ifndef AUDIO_SYNTH_POLYPHONICSYNTHESIZER_H
+#define AUDIO_SYNTH_POLYPHONICSYNTHESIZER_H
 
 #include <string>
 #include <vector>
@@ -7,12 +7,12 @@
 #include "AudioContext.h"
 #include "AudioPipeline.h"
 #include "SignalGraph.h"
-#include "InstrumentFactory.h"
+#include "SynthFactory.h"
 
 namespace Audio::Synth {
-    class Instrument {
+    class PolyphonicSynthesizer {
     public:
-        explicit Instrument(InstrumentSpec spec);
+        explicit PolyphonicSynthesizer(SynthSpec spec);
 
         void setPostFx(Processing::SignalGraph postFx);
 

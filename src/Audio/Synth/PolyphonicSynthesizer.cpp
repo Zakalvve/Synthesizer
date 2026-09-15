@@ -1,4 +1,4 @@
-#include "Instrument.h"
+#include "PolyphonicSynthesizer.h"
 
 #include <algorithm>
 #include <limits>
@@ -7,20 +7,20 @@
 namespace Audio::Synth {
     using namespace Audio::Processing;
 
-    Instrument::Instrument(InstrumentSpec spec)
-        : _attackDur(spec.attackDur), _decayDur(spec.decayDur), _releaseDur(spec.releaseDur) {
+    PolyphonicSynthesizer::PolyphonicSynthesizer(SynthSpec spec) : _attackDur(spec.attackDur), _decayDur(spec.decayDur), _releaseDur(spec.releaseDur) {
         _pipeline = spec.voiceGraph.compile(spec.maxVoices, 1);
         _voices.resize(spec.maxVoices);
     }
 
-    void Instrument::setPostFx(SignalGraph postFx) {
+    void PolyphonicSynthesizer::setPostFx(SignalGraph postFx) {
         _postFx = postFx.compile(1, 1);
         _hasPostFx = true;
     }
 
-    int Instrument::findFreeOrOldest() {
+    int PolyphonicSynthesizer::findFreeOrOldest() {
         int oldest = 0;
         long oldestOrder = std::numeric_limits<long>::max();
+
         for (int i = 0; i < static_cast<int>(_voices.size()); ++i) {
             if (!_voices[i].inUse) return i;
             if (_voices[i].order < oldestOrder) {
@@ -28,10 +28,11 @@ namespace Audio::Synth {
                 oldest = i;
             }
         }
+
         return oldest;
     }
 
-    void Instrument::playNote(const std::string &noteKey, double frequency, double velocity, long transportSample) {
+    void PolyphonicSynthesizer::playNote(const std::string &noteKey, double frequency, double velocity, long transportSample) {
         int i = -1;
         for (int j = 0; j < static_cast<int>(_voices.size()); ++j) {
             if (_voices[j].inUse && _voices[j].noteKey == noteKey) {
@@ -39,8 +40,11 @@ namespace Audio::Synth {
                 break;
             }
         }
+
         if (i < 0) i = findFreeOrOldest();
+
         _pipeline.resetInstance(i);
+
         Voice &v = _voices[i];
         v.inUse = true;
         v.gate = true;
@@ -52,7 +56,7 @@ namespace Audio::Synth {
         v.order = _orderCounter++;
     }
 
-    void Instrument::releaseNote(const std::string &noteKey) {
+    void PolyphonicSynthesizer::releaseNote(const std::string &noteKey) {
         for (Voice &v: _voices) {
             if (v.inUse && v.gate && v.noteKey == noteKey) {
                 v.gate = false;
@@ -61,7 +65,7 @@ namespace Audio::Synth {
         }
     }
 
-    double Instrument::sample(AudioContext &ctx) {
+    double PolyphonicSynthesizer::sample(AudioContext &ctx) {
         double mono = 0.0;
         for (int i = 0; i < static_cast<int>(_voices.size()); ++i) {
             Voice &v = _voices[i];
@@ -91,7 +95,7 @@ namespace Audio::Synth {
         return mono;
     }
 
-    bool Instrument::isActive() const {
+    bool PolyphonicSynthesizer::isActive() const {
         for (const Voice &v: _voices) if (v.inUse) return true;
         return false;
     }

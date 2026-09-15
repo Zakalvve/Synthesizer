@@ -4,8 +4,7 @@
 
 namespace Audio::Processing {
     const Signal *AudioPipeline::renderInstance(int instanceIndex, AudioContext &ctx) {
-        double *instanceState =
-                _stateArena.data() + static_cast<std::size_t>(instanceIndex) * _instanceStateSize;
+        double *instanceState = _stateArena.data() + static_cast<std::size_t>(instanceIndex) * _instanceStateSize;
 
         ctx._scratch = _scratch.data();
         ctx._instanceState = instanceState;
@@ -28,10 +27,10 @@ namespace Audio::Processing {
     }
 
     void AudioPipeline::resetInstance(int instanceIndex) {
-        double *instanceState =
-                _stateArena.data() + static_cast<std::size_t>(instanceIndex) * _instanceStateSize;
+        double *instanceState = _stateArena.data() + static_cast<std::size_t>(instanceIndex) * _instanceStateSize;
 
         std::fill(instanceState, instanceState + _instanceStateSize, 0.0);
+
         for (const NodeRec &rec: _nodes) {
             rec.processor->resetState(instanceState + rec.stateOffset);
         }

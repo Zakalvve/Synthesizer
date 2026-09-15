@@ -19,7 +19,7 @@
 #include "MidiRollTrack.h"
 #include "MidiRollEvent.h"
 
-#include "PipelineSynthesizer.h"
+#include "AudioEngine.h"
 
 using namespace std;
 using namespace Audio::Processing;
@@ -122,7 +122,7 @@ void runGraphSmokeTest() {
     std::cout << "[SMOKE TEST] " << (pass ? "PASS" : "FAIL") << std::endl;
 }
 
-void renderRoll(const std::string& outputName, Audio::Synth::PipelineSynthesizer& synth) {
+void renderRoll(const std::string& outputName, Audio::Synth::AudioEngine& engine) {
     std::string filePath = "../data/moonlight-sonata.json";
     Audio::Midi::MidiJsonFile mj;
     if (!mj.load(filePath.c_str(), sample_rate)) return;
@@ -132,11 +132,11 @@ void renderRoll(const std::string& outputName, Audio::Synth::PipelineSynthesizer
     wav.open(outputName);
 
     int t = 0;
-    while (roll.isRolling() || synth.isPlaying()) {
+    while (roll.isRolling() || engine.isPlaying()) {
         std::vector<std::unique_ptr<Audio::Midi::MidiRollEvent>> midiEvents = roll.tickRoll(t);
-        for (auto& event : midiEvents) event->process(synth);
+        for (auto& event : midiEvents) event->process(engine);
 
-        Audio::AudioSample stereoSample = synth.sample();
+        Audio::AudioSample stereoSample = engine.sample();
         Audio::AudioSample normalizedSample = stereoSample * (static_cast<double>(max_amplitude) * 1);
         Audio::AudioSample clampedSample = normalizedSample.clamp(-max_amplitude, max_amplitude);
 
@@ -150,19 +150,19 @@ int main() {
     runGraphSmokeTest();
 
     {
-        Audio::Synth::PipelineSynthesizer synth(sample_rate, 1.0, 0);
-        renderRoll("instrument0-saw.wav", synth);
+        Audio::Synth::AudioEngine engine(sample_rate, 1.0, 0);
+        renderRoll("synth0-saw.wav", engine);
     }
     {
-        Audio::Synth::PipelineSynthesizer synth(sample_rate, 1.0, 1);
-        renderRoll("instrument1-sine.wav", synth);
+        Audio::Synth::AudioEngine engine(sample_rate, 1.0, 1);
+        renderRoll("synth1-sine.wav", engine);
     }
     {
-        Audio::Synth::PipelineSynthesizer synth(sample_rate, 1.0, 0, true, true);
-        renderRoll("instrument0-saw-postfx.wav", synth);
+        Audio::Synth::AudioEngine engine(sample_rate, 1.0, 0, true, true);
+        renderRoll("synth0-saw-postfx.wav", engine);
     }
 
-    std::cout << "[RENDER] instrument0-saw.wav, instrument1-sine.wav, instrument0-saw-postfx.wav" << std::endl;
+    std::cout << "[RENDER] synth0-saw.wav, synth1-sine.wav, synth0-saw-postfx.wav" << std::endl;
 
     return 0;
 }
